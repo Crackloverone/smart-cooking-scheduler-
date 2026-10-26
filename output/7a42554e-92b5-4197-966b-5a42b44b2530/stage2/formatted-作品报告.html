@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="docx-page-size" content="A4">
+  <title>智能烹饪调度 Agent 作品报告</title>
+  <style>
+  /* --- CSS @page 页面模型：封面无家具，正文页脚居中页码 --- */
+  @page {
+    @bottom-center { content: counter(page); }
+  }
+  @page cover {
+    @bottom-center { content: none; }
+  }
+  section[role="cover"] { page: cover; }
+
+  :root {
+    --fs-h1: var(--typography-fontSize-coverTitle, 22pt);
+    --fs-h2: var(--typography-fontSize-h1, 20pt);
+    --fs-h3: var(--typography-fontSize-h2, 11pt);
+    --fs-h4: var(--typography-fontSize-h3, 10pt);
+    --fs-cover-cat: var(--typography-fontSize-coverCategory, 14pt);
+    --fs-body: var(--typography-fontSize-body, 10.5pt);
+    --fs-small: var(--typography-fontSize-small, 9pt);
+    --ff-heading: var(--typography-fontFamily-heading, "微软雅黑", "Microsoft YaHei", sans-serif);
+    --ff-body: var(--typography-fontFamily-body, "微软雅黑", "Microsoft YaHei", sans-serif);
+    --lh-body: var(--typography-lineHeight-body, 1.6);
+    --fw-bold: var(--typography-fontWeight-bold, 700);
+    --color-primary: var(--color-primary, #1a5fb4);
+    --color-text: var(--color-text, #1f2328);
+    --color-muted: var(--color-muted, #6b7280);
+    --color-border: var(--color-border, #d0d7de);
+    --color-bg: var(--color-bg, #ffffff);
+    --color-highlight: var(--color-highlight, #f5f7fa);
+    --color-emphasis: var(--color-danger, #c62828);
+    --color-summary-bg: var(--color-highlight, #f5f7fa);
+    --color-summary-border: var(--color-primary, #1a5fb4);
+    --summary-border-width: 4px;
+    --radius-card: var(--spacing-block, 8px);
+    --margin-page: var(--layout-margin, 2.5cm);
+    --page-content-width: var(--layout-contentWidth, 15.6cm);
+
+    /* --- 间距令牌：所有 margin / padding 只准引用它们，禁止裸值 --- */
+    --spacing-zero: 0;
+    --spacing-2xs: 0.3em;
+    --spacing-xs: 0.45em;
+    --spacing-sm: 0.6em;
+    --spacing-md: 0.8em;
+    --spacing-lg: 1.2em;
+    --spacing-xl: 1.6em;
+    --spacing-2xl: 2em;
+    --spacing-3xl: 3em;
+    --spacing-4xl: 4em;
+    --padding-cell-y: 0.45em;
+    --padding-cell-x: 0.7em;
+    --padding-metric-y: 0.5em;
+    --padding-metric-x: 0.4em;
+  }
+
+  * { box-sizing: border-box; margin: var(--spacing-zero); padding: var(--spacing-zero); }
+  body {
+    font-family: var(--ff-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--color-text);
+    background: var(--color-bg);
+    max-width: var(--page-content-width);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ---------- 封面 ---------- */
+  .report-cover { padding: var(--spacing-4xl) var(--spacing-zero) var(--spacing-3xl) var(--spacing-zero); background: var(--color-bg); }
+  .cover-category {
+    font-size: var(--fs-cover-cat);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    letter-spacing: 0.08em;
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+  }
+  .cover-title {
+    font-size: var(--fs-h1);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-text);
+    text-align: center;
+    margin-bottom: var(--spacing-xs);
+  }
+  .cover-subtitle {
+    font-size: var(--fs-h3);
+    color: var(--color-muted);
+    text-align: center;
+    margin-bottom: var(--spacing-3xl);
+  }
+  .cover-meta { font-size: var(--fs-small); color: var(--color-muted); }
+  .cover-meta p { text-align: center; margin-bottom: var(--spacing-2xs); }
+
+  /* ---------- 目录 ---------- */
+  .doc-toc { padding: var(--spacing-md) var(--spacing-zero); border-bottom: 1px solid var(--color-border); }
+  .toc-title {
+    font-size: var(--fs-h3);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    text-align: left;
+    margin-bottom: var(--spacing-sm);
+  }
+  .toc-list { list-style: none; list-style-type: none; padding-left: var(--spacing-zero); }
+  .toc-list li { margin-bottom: var(--spacing-2xs); text-indent: var(--spacing-zero); text-align: left; color: var(--color-text); }
+
+  /* ---------- 执行摘要 ---------- */
+  .executive-summary {
+    margin: var(--spacing-2xl) var(--spacing-zero);
+    padding: var(--spacing-md);
+    border-left: var(--summary-border-width) solid var(--color-summary-border);
+    background: var(--color-summary-bg);
+  }
+  .summary-header h2 {
+    font-size: var(--fs-h3);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    text-align: left;
+    margin-bottom: var(--spacing-sm);
+  }
+  .summary-body p { margin-bottom: var(--spacing-md); text-align: left; }
+  .summary-body p:last-child { margin-bottom: var(--spacing-zero); }
+
+  /* ---------- 指标卡 ---------- */
+  .metrics-table { width: 100%; border-collapse: collapse; margin-bottom: var(--spacing-md); }
+  .metrics-table th {
+    border: 1px solid var(--color-border);
+    padding: var(--padding-metric-y) var(--padding-metric-x);
+    text-align: center;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-bold);
+    color: var(--color-muted);
+    background: var(--color-bg);
+  }
+  .metrics-table td {
+    border: 1px solid var(--color-border);
+    padding: var(--padding-metric-y) var(--padding-metric-x);
+    text-align: center;
+    font-size: var(--fs-h4);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+  }
+
+  /* ---------- 正文 ---------- */
+  .report-body { padding: var(--spacing-2xl) var(--spacing-zero); }
+  .report-body h2 {
+    font-size: var(--fs-h2);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    text-align: left;
+    margin-top: var(--spacing-2xl);
+    margin-bottom: var(--spacing-md);
+  }
+  .report-body h3 {
+    font-size: var(--fs-h3);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-text);
+    text-align: left;
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+  }
+  .report-body p { margin-bottom: var(--spacing-md); text-align: left; }
+  .report-body ul, .report-body ol { margin-bottom: var(--spacing-md); padding-left: var(--spacing-xl); }
+  .report-body li { margin-bottom: var(--spacing-2xs); text-align: left; }
+  .sub-label {
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-text);
+    text-align: left;
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  /* ---------- 数据表 ---------- */
+  .data-table { width: 100%; border-collapse: collapse; margin-bottom: var(--spacing-md); }
+  .data-table th, .data-table td {
+    border: 1px solid var(--color-border);
+    padding: var(--padding-cell-y) var(--padding-cell-x);
+    text-align: left;
+    vertical-align: top;
+  }
+  .data-table th {
+    background: var(--color-highlight);
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+  }
+  .data-table td.num { text-align: right; }
+
+  /* ---------- 强调 ---------- */
+  .data-emphasis { color: var(--color-emphasis); font-weight: var(--fw-bold); }
+  .kv-note {
+    border-left: 3px solid var(--color-primary);
+    background: var(--color-highlight);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+  .card-note { width: 100%; border-collapse: collapse; margin-bottom: var(--spacing-md); }
+  .card-note th {
+    background: var(--color-highlight);
+    border-left: var(--summary-border-width) solid var(--color-primary);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    font-family: var(--ff-heading);
+    font-weight: var(--fw-bold);
+    color: var(--color-text);
+  }
+  .card-note td {
+    background: var(--color-highlight);
+    border-left: var(--summary-border-width) solid var(--color-primary);
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md) var(--spacing-md);
+    text-align: left;
+  }
+  .card-note td p { margin-bottom: var(--spacing-md); text-align: left; }
+  .card-note td p:last-child { margin-bottom: var(--spacing-zero); }
+
+  .divider { border-bottom: 1px solid var(--color-border); margin: var(--spacing-2xl) var(--spacing-zero); }
+  </style>
+</head>
+<body>
+  <section role="cover" class="report-cover">
+    <p class="cover-category">第二届浙江省大学生人工智能竞赛 · 方太人工智能专项赛</p>
+    <h1 class="cover-title">智能烹饪调度 Agent 作品报告</h1>
+    <p class="cover-subtitle">多菜并行烹饪规划与动态重排系统</p>
+    <div class="cover-meta">
+      <p>赛题编号：ZX-2026-030</p>
+      <p>发榜单位：宁波方太厨具有限公司</p>
+      <p>作品类别：智能烹饪调度 Agent</p>
+      <p>提交日期：2026 年 10 月 8 日</p>
+    </div>
+  </section>
+
+  <section role="body" class="report-body" data-page-restart="1">
+    <nav class="doc-toc" aria-label="文档目录">
+      <p class="toc-title">目录</p>
+      <ol class="toc-list">
+        <li>一、作品概述</li>
+        <li>二、问题分析</li>
+        <li>三、系统总体设计</li>
+        <li>四、关键技术实现</li>
+        <li>五、验证与实测</li>
+        <li>六、创新点</li>
+        <li>七、局限与后续工作</li>
+        <li>八、交付物清单</li>
+      </ol>
+    </nav>
+
+    <div class="executive-summary">
+      <div class="summary-header">
+        <h2>执行摘要</h2>
+      </div>
+      <table class="metrics-table">
+        <thead>
+          <tr>
+            <th>设备冲突 / 依赖违反</th>
+            <th>出锅差（中位）</th>
+            <th>初始排程耗时</th>
+            <th>动态重排耗时</th>
+            <th>回归测试</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0 / 0</td>
+            <td>2.0 分钟</td>
+            <td>121 毫秒</td>
+            <td>809 毫秒</td>
+            <td>596 项</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="summary-body">
+        <p>本作品把"一桌菜"当作一个<span class="data-emphasis">多资源约束下的调度问题</span>来解：用大语言模型负责它擅长的语义理解与决策判断，用确定性求解器负责它擅长的约束求解与最优性保证，二者通过<span class="data-emphasis">离线预热</span>解耦，使在线排程同时具备"模型在环"的智能与"毫秒级"的确定性。</p>
+        <p>赛题把挑战划分为理解层（自然语言菜谱 → 结构化信息）与规划层（多资源约束下的任务调度优化）。我们的判断是：理解层是"脏活"，规划层是"硬活"——后者本质上是一个带批次机与滞后约束的资源受限项目调度问题，单纯靠提示词让大模型"排一排"，不可能同时满足零冲突、零依赖违反与最优性。因此系统没有做成"一个大模型加几个工具调用"，而是做成<span class="data-emphasis">模型与求解器分工明确的双引擎结构</span>。</p>
+        <p>在 50 组随机 3–5 菜组合的实测中，系统做到设备冲突与依赖违反均为 0，出锅差中位数 2.0 分钟，出锅差小于 5 分钟的占比 82%，初始排程耗时 121 毫秒、动态重排 809 毫秒，两项性能指标均大幅优于赛题优秀线。全部数字均来自可复现的实测脚本。</p>
+      </div>
+    </div>
+
+    <h2>一、作品概述</h2>
+    <p>本章说明作品要解决的问题、对赛题两层挑战的判断，以及一组可直接核对的实测指标。</p>
+
+    <h3>1.1 一句话概括</h3>
+    <p>本作品是一套面向家庭多菜并行烹饪场景的智能调度系统：输入是用户选定的若干道菜与厨房设备条件，输出是一份可直接执行的烹饪计划（含每道菜各步骤的设备、起止时刻与参数），并在执行过程中支持动态重排与关键节点提醒。</p>
+
+    <h3>1.2 赛题定位与我们的判断</h3>
+    <p>赛题把挑战明确划分为两层：<strong>理解层</strong>（从自然语言菜谱中提取设备、时间、依赖等结构化信息）与<strong>规划层</strong>（多资源约束下的任务调度优化）。我们对这两层的判断是：</p>
+    <ul>
+      <li><strong>理解层是"脏活"</strong>——官方 100 道菜共 767 个步骤，写法极不统一，同一件事有几十种表述方式；</li>
+      <li><strong>规划层是"硬活"</strong>——它本质上是一个带批次机与滞后约束的资源受限项目调度问题（RCPSP），单纯靠提示词让大模型"排一排"，不可能同时满足零冲突、零依赖违反与最优性。</li>
+    </ul>
+    <p>因此我们没有把系统做成"一个大模型加几个工具调用"，而是做成<strong>模型与求解器分工明确的双引擎结构</strong>。这构成本作品最主要的设计立场。</p>
+
+    <h3>1.3 核心指标速览</h3>
+    <p>下表是本次提交版本在标准测试条件下的实测结果，每项均可在交付物中的脚本里复现。</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>维度</th><th>实测</th><th>赛题线</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>设备冲突 / 依赖违反</td><td class="num">0 / 0</td><td>0</td></tr>
+        <tr><td>同出锅时间差（中位 / 均值）</td><td class="num">2.0 / 2.8 分钟</td><td>优秀 &lt; 5 分钟</td></tr>
+        <tr><td>出锅差 &lt; 5 分钟占比</td><td class="num">82%</td><td>越高越好</td></tr>
+        <tr><td>总烹饪时长（均值）</td><td class="num">61.5 分钟</td><td>越短越好</td></tr>
+        <tr><td>最长连续手动操作</td><td class="num">20.5 分钟</td><td>越短越好</td></tr>
+        <tr><td>初始排程耗时</td><td class="num">121 毫秒</td><td>优秀 &lt; 5 秒</td></tr>
+        <tr><td>动态重排响应</td><td class="num">809 毫秒</td><td>优秀 &lt; 3 秒</td></tr>
+        <tr><td>回归测试</td><td class="num">596 项全通过</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <h2>二、问题分析</h2>
+    <p>本章把"多菜并行烹饪"这个生活场景翻译成可求解的工程问题，并说明它与通用调度问题的差别。</p>
+
+    <h3>2.1 家庭烹饪的三重困境</h3>
+    <p>赛题描述的场景痛点可以拆成三个互相纠缠的问题：</p>
+    <ol>
+      <li><strong>设备资源有限</strong>：灶具通常 2 个灶眼，蒸箱、烤箱各 1 台，冰箱 1 台。设备一旦被占用，其他菜只能等——而蒸箱和烤箱恰恰是最容易成为瓶颈的两台。</li>
+      <li><strong>步骤依赖复杂</strong>：腌制必须早于蒸制、焯水必须早于炖煮，而"腌制 2 小时"这类长等待又恰恰是插入其他操作的黄金窗口。</li>
+      <li><strong>时序协调困难</strong>：用户真正想要的不是"最快做完"，而是<strong>一起上桌</strong>——凉了的菜再快也没有意义。</li>
+    </ol>
+    <p>这三者构成了一个典型的多目标冲突：<strong>追求同时出锅会拉长总时长，追求总时长最短会让菜凉掉。</strong></p>
+
+    <h3>2.2 与通用调度问题的差别</h3>
+    <p>本问题不能直接套用教科书模型，有三处特殊结构：</p>
+    <ul>
+      <li><strong>批次机（Batch Machine）</strong>：蒸箱和烤箱一次可以放多盘，但只有同温才能合炉。赛题原文明确"蒸箱不能同时进行不同温度的蒸制"，这意味着设备占用不是简单的"同一时刻只能一个任务"，而是"同一时刻只能一个温度档"。异温切换还要留降温时间。</li>
+      <li><strong>可抢占的人工与不可抢占的设备</strong>：人在"腌制 2 小时"期间是空闲的，可以去做另一道菜的切配；但设备一旦启动就不能中断。这决定了依赖图不能是纯线性链。</li>
+      <li><strong>软性的"热"约束</strong>：菜出锅后能放多久取决于菜品本身（蒸鱼几分钟就凉，卤味可以放很久），这是一个<strong>语义属性</strong>，无法从步骤文本的语法结构中推出。</li>
+    </ul>
+    <p>第三点尤其关键：它说明<strong>规划层必须向理解层索取语义信息</strong>，而不是只拿结构化的时间与设备。</p>
+
+    <h3>2.3 由此确定的三条设计原则</h3>
+    <p>上述结构决定了三条贯穿全系统的设计原则，后续每一处技术选择都可由它们推出。</p>
+    <ol>
+      <li><strong>硬约束只做可行性，不进目标函数</strong>。设备冲突与依赖违反是"能不能做"的问题，把它们塞进目标函数会让求解器学会"用违反换分数"。</li>
+      <li><strong>目标函数不得包含可被反向利用的代理量</strong>。例如"设备利用率"看起来很合理，但优化它会诱导求解器故意拉长占用时间。利用率只能是仪表盘，不能是方向盘。</li>
+      <li><strong>口径必须与赛题评分表逐字对齐</strong>。例如"同出锅时间差"，我们严格采用评分表定义的原始跨度 max F − min F，而不是更"语义正确"的冷等待加权和——后者在冷菜可以早出锅时会给出相反的方向。</li>
+    </ol>
+
+    <div class="divider"></div>
+
+    <h2>三、系统总体设计</h2>
+    <p>本章给出系统的分层结构、模型与求解器之间的职责边界，以及三处影响全局的关键取舍。</p>
+
+    <h3>3.1 五层架构</h3>
+    <p>系统按赛题的五层要求组织，每层职责单一、边界清晰：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>层</th><th>模块</th><th>职责</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>L1</td><td>parser</td><td>自然语言菜谱 → 结构化步骤（设备 / 温度 / 时长 / 依赖 / 人工介入）</td></tr>
+        <tr><td>L2</td><td>scheduler</td><td>多菜并行排程：贪心启发式 + CP-SAT + 精确模型三轨取优 + 独立校验</td></tr>
+        <tr><td>L3</td><td>agent/objective</td><td>用户自然语言偏好 → 多目标权重向量 → 策略选择</td></tr>
+        <tr><td>L4</td><td>agent/replan、notifier</td><td>动态重排姿态仲裁 + 关键节点通知生成</td></tr>
+        <tr><td>L5</td><td>全链路</td><td>时间预算、熔断降级、离线缓存，保证性能达标</td></tr>
+        <tr><td>—</td><td>spec/adapter</td><td>官方接口适配器（统一排程入口 + 官方 schema 输出）</td></tr>
+        <tr><td>—</td><td>web/index.html</td><td>零框架依赖的演示界面（含甘特图）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 职责边界：谁在做决策，谁在算约束</h3>
+    <p>这是本作品最容易被问到的问题，也是设计的核心。我们把它摊开讲：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>环节</th><th>承担者</th><th>是否模型</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>菜谱解析（设备 / 时长 / 温度 / 依赖）</td><td>正则规则为主 + 模型兜底补全</td><td>半模型</td></tr>
+        <tr><td>调度语义先验（趁热 / 可放 / 可提前备菜 / 可合炉）</td><td>模型（离线抽取，在线只读缓存）</td><td>是</td></tr>
+        <tr><td>目标塑形（用户口语 → 多目标权重）</td><td>规则快速路径 + 模型精化</td><td>是</td></tr>
+        <tr><td>策略择优（在 6 条策略里选哪条）</td><td>求解器执行 + 模型提议与反思</td><td>是</td></tr>
+        <tr><td>排程求解（放置 / 冲突 / 依赖）</td><td>三轨取优（贪心 + CP-SAT + 精确模型）</td><td>否，纯代码</td></tr>
+        <tr><td>重排姿态仲裁（最小扰动 / 重新对齐 / 保热优先）</td><td>模型仲裁 + 规则兜底</td><td>是</td></tr>
+        <tr><td>重排求解（冻结 + 重排）</td><td>求解器（已完成步骤硬冻结）</td><td>否，纯代码</td></tr>
+        <tr><td>通知文案</td><td>模型语境化 + 模板兜底</td><td>是</td></tr>
+      </tbody>
+    </table>
+    <p><strong>关键设计：模型参与的是决策，不是在线算力。</strong>语义先验、参数补全、策略结论一律离线算好落盘；在线排程只读缓存，模型决策 0 延迟、0 网络依赖。需要演示完整 Agent 能力时再打开在线决策，且有超时与熔断兜底。</p>
+    <p>这条约束的直接收益是：<strong>在没有外网、甚至没有装模型的评审机上，系统的全部指标与耗时不变。</strong></p>
+
+    <h3>3.3 三处关键取舍</h3>
+    <p>以下三处取舍决定了系统的整体形态，也是答辩时最常被追问的地方。</p>
+
+    <p class="sub-label">取舍一：为什么不用"端到端大模型排程"</p>
+    <p>我们实测过让模型直接输出时间轴。结论是它无法同时守住零冲突与零依赖违反——不是提示词不够好，而是这类约束需要全局一致性，而自回归生成天生是局部的。把求解交给确定性求解器之后，约束从"希望它遵守"变成了"结构上不可能违反"。</p>
+
+    <p class="sub-label">取舍二：为什么保留三条求解轨而不是只留最好的一条</p>
+    <p>精确模型在 3–5 菜规模上几乎总能给出最优解，但它依赖一个前提：问题实例能被完整建模。设备故障、硬冻结、预算不足这些情况下，贪心启发式反而是唯一能出解的那条。三轨取优的意义不是"三个都算一遍选最好"，而是<strong>任何单轨失效时系统仍然出得来合法计划</strong>。</p>
+
+    <p class="sub-label">取舍三：为什么宁可分数低一点也不丢任务</p>
+    <p>解析层修过一处正确性缺陷：官方菜谱里有 12 句复合句（形如"放入烤箱第 3 层，烘烤结束，取出晾凉"）的真实设备作业，曾被"晾凉 / 冷却"这类等待词整句抹掉。修复后解析正确性从 95/100 提升到 99/100，但问题本身也变得更难更真实——优秀率 92% 降至 90%、总时长 73.5 分钟升至 74.8 分钟。我们保留了这个权衡：<span class="data-emphasis">宁可指标低一点，也不要靠丢任务刷分。</span></p>
+
+    <div class="divider"></div>
+
+    <h2>四、关键技术实现</h2>
+    <p>本章按赛题的五层要求逐层说明实现方式，每层都给出对应的实测数据或可验证的保证。</p>
+
+    <h3>4.1 L1 结构化解析</h3>
+    <p>解析器输出赛题要求的五要素：设备（七类 + 人工）、温度、持续时间、步骤依赖、是否需人工介入，另附工作模式、是否无人值守、步骤类别等调度需要的附加信息。</p>
+    <p>三处必须处理好的细节：</p>
+    <ol>
+      <li><strong>等待词的双向守住</strong>。中文菜谱里"浸泡 / 泡发 / 解冻 / 过夜 / 静置 / 醒面 / 晾凉 / 放凉 / 冷却 / 沥水"既是真实等待、又常与真实加热动作出现在同一句里。我们的处理是：命中等待词即把整句降级为"等待"；但放行三类例外——明确的装载动词、点名加热设备并带显式时长的句子、灶具上的主动烹饪动作。漏降级会把"浸泡 4 小时"变成蒸箱独占 4 小时；乱降级会把"烘烤结束，取出晾凉"里真实的烤箱作业整句抹掉。</li>
+      <li><strong>假设备的两大来源</strong>。一是名词里嵌的烹饪动词（"蒸烤盘 / 烤盘 / 蒸架"是配件不是设备），二是把纯装载句（"将烤盘放入烤箱中"）当成设备作业。前者会造出凭空占用的蒸箱任务，后者会造出时长靠猜的虚假占用。</li>
+      <li><strong>复合设备消歧</strong>。方太的蒸烤一体机同时具备蒸与烤能力，菜谱写"放入机器中间层"时并未指明用哪个功能。我们按同菜上下文消歧：出现水箱 / 加水 / 蒸制信号判蒸箱，出现烤盘 / 油纸 / 锡纸 / 烘烤信号判烤箱。</li>
+    </ol>
+    <p><strong>准确率如何证明。</strong>我们建了一份人工标注集（20 道菜 / 148 步，四类设备全覆盖），标注只依据菜谱原文、不参考解析器输出。对照结果如下：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>评分项</th><th>准确率</th><th>样本</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>设备识别</td><td class="num">92.6%</td><td>137 / 148</td></tr>
+        <tr><td>温度提取</td><td class="num">100.0%</td><td>8 / 8</td></tr>
+        <tr><td>时长提取</td><td class="num">100.0%</td><td>20 / 20</td></tr>
+        <tr><td>人工介入判断</td><td class="num">94.6%</td><td>140 / 148</td></tr>
+        <tr><td>依赖推理</td><td class="num">99.3%</td><td>141 / 142</td></tr>
+      </tbody>
+    </table>
+    <p>温度与时长两项的准确率只在原文显式写出该值的步骤上统计——原文没写的地方，"解析值对不对"本身无定义，把它算进分母会得到一个虚假的低分。</p>
+
+    <h3>4.2 L2 多菜并行调度</h3>
+    <p>本层是整个系统的核心。我们把它拆成"问题建模、三轨取优、独立校验"三部分。</p>
+
+    <p class="sub-label">问题建模</p>
+    <p>我们把问题写成严格的数学规划：以"批次机 + 两阶段 ε-约束 + 三层字典序目标"刻画蒸烤设备的同温合炉、异温降温、出锅对齐等结构。关键约束包括：</p>
+    <ul>
+      <li>设备容量约束（灶具 2 灶眼、蒸箱 / 烤箱 / 冰箱按温区计容量）；</li>
+      <li>同温合炉与异温降温缓冲（只罚降温、不罚升温，容差与同温合炉共用同一常量）；</li>
+      <li>步骤依赖与<strong>提前备菜的前缀闭包</strong>（提前做人工准备时，必须保证其所有祖先也已完成）；</li>
+      <li>连续手动操作时长上限（赛题 L3 的独立评分项）。</li>
+    </ul>
+
+    <p class="sub-label">三轨取优</p>
+    <p>在线路径依次尝试三条求解轨：</p>
+    <ol>
+      <li><strong>贪心启发式</strong>（6 条策略）：毫秒级，永远能出解，是兜底；</li>
+      <li><strong>CP-SAT</strong>：在贪心解的基础上做精解；</li>
+      <li><strong>精确模型</strong>：把问题完整写成数学规划求解，支持硬冻结（动态重排必需）。</li>
+    </ol>
+    <p>三轨结果按<strong>出锅差 Γ 与总时长 T 的字典序</strong>取优。这一顺序直接对应赛题的评分权重——同出锅时间差是 25 分里的首要项。</p>
+
+    <p class="sub-label">独立校验</p>
+    <p>返回前由独立校验模块对计划做一次复验，检查设备冲突与依赖违反。求解器与校验器是两套代码，前者出错后者能拦住。</p>
+
+    <h3>4.3 L3 多目标优化</h3>
+    <p>赛题给了三个观察点：同出锅时间差、用户连续手动操作时长、总烹饪时间压缩率。我们的处理是把它们组织成有优先级的字典序，而不是拍脑袋加权求和：</p>
+    <ul>
+      <li><strong>第一优先：出锅差 Γ</strong>。这是赛题明确"优秀"的指标，也是用户真实诉求。</li>
+      <li><strong>第二优先：总时长 T</strong>。</li>
+      <li><strong>第三优先：语义冷等待</strong>（保热）。</li>
+    </ul>
+    <table class="card-note">
+      <thead>
+        <tr><th>一个必须避开的建模陷阱</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>
+          <p>如果直接用"完成时刻"计算保热等待，求解器会学会"提前很久把菜做好然后干等"——实测中位数会恶化到 23 分钟。我们改用"最后一次进入加热设备结束"作为保热基准，并且<strong>以 Γ 计价</strong>（取保热等待与 Γ 预算的较小值），否则一道菜等 170 分钟就能夺走 Γ 的权重。</p>
+        </td></tr>
+      </tbody>
+    </table>
+    <p><strong>用户语义的作用。</strong>用户说一句"家里来客人，希望所有菜一起上桌"，系统会把它翻成"出锅差权重拉满"；说"赶时间，越快越好"，则翻成"总时长权重拉满"。实测（同一批 5 道菜、同一套求解器，只改这一句话）：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>用户输入</th><th>总时长</th><th>出锅差</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>（无）</td><td class="num">72 分钟</td><td class="num">13 分钟</td></tr>
+        <tr><td>"家里来客人，希望所有菜一起上桌"</td><td class="num">91 分钟</td><td class="num">2 分钟</td></tr>
+        <tr><td>"赶时间，越快越好"</td><td class="num">72 分钟</td><td class="num">13 分钟</td></tr>
+      </tbody>
+    </table>
+    <p><span class="data-emphasis">用 19 分钟总时长换回了 11 分钟出锅差</span>，而且不是靠改代码，只靠一句话。</p>
+
+    <h3>4.4 L4 动态重排与通知</h3>
+    <p>本层要解决的是"计划赶不上变化"：用户临时加菜、设备突然故障、某一步实际耗时超出预估。</p>
+
+    <p class="sub-label">动态重排的两条硬要求</p>
+    <p>不推翻已完成步骤、重排后不新增冲突。我们的实现是<strong>硬冻结 + 姿态仲裁</strong>：已完成的步骤作为硬约束传给求解器，时间一格不动；由模型仲裁本次重排的姿态（最小扰动 / 重新对齐 / 保热优先），姿态决定候选策略的排序，但最终仍由求解器在多策略中择优。</p>
+
+    <p class="sub-label">"不劣化"如何证明</p>
+    <p>"重排后 Pareto 不劣化"这句话如果不写清楚基准就是空话——新增一道菜必然增加总工作量，"总时长不增"根本不可能成立。所以我们把它拆成两条当场可判真伪的断言：</p>
+    <ol>
+      <li><strong>已完成步骤零变动</strong>（硬保证，逐任务比对开始时刻）；</li>
+      <li><strong>不劣于串行基线</strong>（基线 = 原计划不动 + 新菜整体串行接在末尾，这是一个必然可行的朴素解）。</li>
+    </ol>
+    <p>三项指标（出锅差 / 总时长 / 连续手动）的前后涨跌如实列出，不粉饰。</p>
+
+    <p class="sub-label">设备故障的处理</p>
+    <p>临时把该设备容量置 0，相关任务按顶替关系改走灶具（蒸锅隔水蒸、煎制），顶替设备也不可用时才降级为人工操作。这里有一个并发陷阱值得一提——早期实现是改全局容量字典、排完再恢复，在线程池下两个并发请求会互相踩：A 请求把蒸箱置 0 排程期间，B 请求读到的蒸箱也是 0，于是 B 的计划里蒸箱凭空消失。现在改为<strong>请求级上下文覆盖</strong>，全局字典永不被改写。</p>
+
+    <p class="sub-label">通知生成</p>
+    <p>通知分四类节点，直接对应赛题原文的示例：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>类型</th><th>赛题原文示例</th><th>本系统</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>人工操作前提醒</td><td>"现在可以开始切西兰花"</td><td>并利用"某菜正在蒸 / 烤 / 炖"的等待窗口插活</td></tr>
+        <tr><td>出锅预警</td><td>—</td><td>出锅前 2–3 分钟提醒，需趁热的菜附"趁热上桌"</td></tr>
+        <tr><td>设备腾空</td><td>—</td><td>提示可以立即接续下一道菜</td></tr>
+        <tr><td>重排变更说明</td><td>—</td><td>已完成保留 N 步 / 调整 M 步 / 新出锅时间</td></tr>
+      </tbody>
+    </table>
+    <p>离线档走确定性模板（零延迟、可离线断言），在线档由模型语境化，失败自动回落模板。</p>
+
+    <h3>4.5 L5 性能效率</h3>
+    <p>赛题要求初始排程小于 5 秒（优秀）、动态重排小于 3 秒（优秀）。实测：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>场景</th><th>实测</th><th>优秀线</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>初始排程（5 菜）</td><td class="num">121–284 毫秒</td><td>&lt; 5000 毫秒</td></tr>
+        <tr><td>动态重排（临时加菜）</td><td class="num">809 毫秒</td><td>&lt; 3000 毫秒</td></tr>
+        <tr><td>动态重排（设备故障）</td><td class="num">176 毫秒</td><td>&lt; 3000 毫秒</td></tr>
+      </tbody>
+    </table>
+    <p><strong>性能余量的来源不是"算得快"，而是"不该算的不算"</strong>：模型决策离线预热、在线只读缓存；求解预算从后往前分配（保证精确轨永远有预算，不会出现"模型调用吃光预算导致交付贪心解"）；启动时探测模型可用性，让熔断状态在接客前落定，避免第一个请求独自承担超时代价。</p>
+
+    <div class="divider"></div>
+
+    <h2>五、验证与实测</h2>
+    <p>本章给出质量基准、最优性证据、消融实验、模型不可用时的表现与工程可信度五组数据。</p>
+
+    <h3>5.1 质量基准</h3>
+    <p>50 组随机 3–5 菜组合，seed=42，离线档：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>指标</th><th>实测</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>设备冲突 / 依赖违反</td><td class="num">0 / 0</td></tr>
+        <tr><td>出锅差 中位数 / 均值</td><td class="num">2.0 / 2.8 分钟</td></tr>
+        <tr><td>出锅差 &lt; 5 分钟占比</td><td class="num">82%</td></tr>
+        <tr><td>总时长 均值</td><td class="num">61.5 分钟</td></tr>
+        <tr><td>最长连续手动</td><td class="num">20.5 分钟</td></tr>
+        <tr><td>排程耗时 均值 / p95</td><td class="num">121 / 269 毫秒</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.2 最优性证据</h3>
+    <p>60 组随机用例（seed=11）的三轨对比与健全性自检：</p>
+    <ul>
+      <li>求解状态 <strong>OPTIMAL 60/60</strong>；</li>
+      <li>逐例判定（开第三轨 vs 关第三轨）<strong>更优 30 / 打平 30 / 更差 0</strong>；</li>
+      <li>冲突 0 / 依赖违规 0 / <strong>总时长小于下界 0 例</strong>；</li>
+      <li>第三轨净收益：总时长 −15.9%、出锅差 −23.2%、连续手动 −36.5%。</li>
+    </ul>
+    <p>我们同时验证了 Γ 的独立下界：在容量为 1 的资源上，各菜末步时长之和减去最长者即为下界，<span class="data-emphasis">68% 的实例上 Γ 恰好等于该下界</span>——说明这些实例上出锅差已经没有进一步优化的空间。</p>
+
+    <h3>5.3 消融实验</h3>
+    <p>同 seed 逐档关模块，观察每一层各值多少：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>配置</th><th>出锅差 &lt; 5min</th><th>总时长 均值</th><th>连续手动 均值</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>A 交付版</strong>（Agent 闭环 + 三轨取优）</td><td class="num">82%</td><td class="num">62.0 分钟</td><td class="num">21.3 分钟</td></tr>
+        <tr><td>B 关第三轨（关精确模型）</td><td class="num">76%</td><td class="num">70.8 分钟</td><td class="num">31.9 分钟</td></tr>
+        <tr><td>C 单策略求解器（关 Agent 闭环）</td><td class="num">82%</td><td class="num">81.4 分钟</td><td class="num">50.9 分钟</td></tr>
+      </tbody>
+    </table>
+    <p><strong>读法</strong>：单独关掉任何一层，总时长都会明显变长。Agent 闭环决定"走哪条路"，精确模型决定"这条路能走多好"，二者缺一不可——不是各自下降 15% 的叠加，而是协同。</p>
+
+    <h3>5.4 模型不可用时的表现</h3>
+    <p>实测在模型服务返回额度耗尽错误后，上述全部指标与耗时没有任何变化（离线缓存 + 规则兜底），系统对模型可用性零依赖。</p>
+
+    <h3>5.5 工程可信度</h3>
+    <p>下表是各层体检脚本的实测结果，全部可在交付物中复现。</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>项</th><th>结果</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>回归测试</td><td class="num">596 通过 / 0 失败</td></tr>
+        <tr><td>框架完整性体检</td><td class="num">82 / 0</td></tr>
+        <tr><td>接口层体检（含并发隔离）</td><td class="num">26 / 0</td></tr>
+        <tr><td>界面交互体检</td><td class="num">189 / 0</td></tr>
+        <tr><td>真实浏览器布局体检</td><td class="num">120 / 0</td></tr>
+      </tbody>
+    </table>
+    <p>我们给关键护栏做了<strong>变异自检</strong>：主动往源码里注入缺陷（去掉回车绑定、打坏兜底分档、把"鸡精"当成肉、把静默丢菜改回来等），确认对应的护栏真的会红。理由很直接——<span class="data-emphasis">一条不会响的护栏比没有护栏更危险</span>，因为它会让人误以为这块是安全的。</p>
+
+    <div class="divider"></div>
+
+    <h2>六、创新点</h2>
+    <p>本作品的创新集中在"模型与求解器如何协作"这一层，具体有六点：</p>
+    <ol>
+      <li><strong>模型与求解器的职责切分，并用离线预热解耦。</strong>模型负责语义与决策、求解器负责约束与最优性；模型产物离线算好落盘，在线零延迟。这使系统同时具备"模型在环"的智能与"评审机可复现"的确定性。</li>
+      <li><strong>三轨取优 + 独立校验的求解架构。</strong>贪心 / CP-SAT / 精确模型三条轨按（Γ, T）字典序取优，任何单轨失效系统仍出合法解；返回前由独立校验器复验冲突与依赖。</li>
+      <li><strong>保热项以 Γ 计价的有界建模。</strong>避免了"用完成时刻算保热"导致的求解器被奖励"早做熟干等"，也避免了无界保热项夺走出锅差的权重。</li>
+      <li><strong>可验证的"不劣化"保证。</strong>把"Pareto 不劣化"拆成两条当场可判真伪的断言（已完成步骤零变动 + 不劣于串行基线），而不是一句无法证伪的口号。</li>
+      <li><strong>请求级资源覆盖消除并发竞态。</strong>设备故障与厨房配置覆盖均走请求级上下文，全局容量字典永不被改写，同一份输入可复现同一份计划。</li>
+      <li><strong>以人工标注集把"解析准确率"从自证变成可测。</strong>20 道菜 / 148 步人工标注（只依据原文），五项指标逐项对照，并给出准确率下限护栏，防止后续改动静默退化。</li>
+    </ol>
+
+    <div class="divider"></div>
+
+    <h2>七、局限与后续工作</h2>
+    <p>我们如实列出当前已知的不足：</p>
+    <ol>
+      <li><strong>L1 仍有 4 类解析残留</strong>：少量纯装载 / 取放句被判成设备作业，造出时长靠猜的虚假占用；「水箱 / 加水」被当作蒸箱信号，而方太蒸烤一体机的烤菜同样需要加水，导致部分烤菜被判成蒸箱；少量真实设备步被"纯装载句"守卫误抹；合成预热步插入后，后置步漏了对它的依赖（当前影响 2 道菜）。</li>
+      <li><strong>出锅差优秀率 82%</strong>：蒸箱与烤箱各仅 1 台，是物理硬瓶颈；剩余 18% 的组合（多为两道菜同时需要蒸或烤）无法做到同时出锅。</li>
+      <li><strong>七类设备中三类当前空置</strong>：官方 100 道菜里"洗碗机 / 烟机"出现 0 次，"净咖一体机"仅作为食材来源（"加纯净水"）被提到，因此这三类设备的容量虽已在册，但没有任务使用。</li>
+      <li><strong>菜谱库边界</strong>：官方给定的 100 道菜为只读基线；超出该库的菜名需要调用方随请求提供步骤，否则接口会显式返回 422，而不是给出一份残缺计划。</li>
+    </ol>
+    <p>后续工作的优先级：先修 L1 的设备判定（尤其"水箱"信号与纯装载句的边界），再考虑把出锅差优秀率从 82% 往上推——后者受限于物理设备数量，空间有限。</p>
+
+    <div class="divider"></div>
+
+    <h2>八、交付物清单</h2>
+    <p>本次提交包含以下内容，均可离线运行与复现：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>交付物</th><th>位置</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>系统源代码</td><td>app / scripts / tests</td><td>含 L1–L4 全部模块</td></tr>
+        <tr><td>官方评分接口</td><td>POST /api/plan</td><td>严格官方 schema，五字段输出</td></tr>
+        <tr><td>测评接口清单</td><td>docs/测评接口清单.md</td><td>六个端点的 schema + curl 示例 + 评分项对照</td></tr>
+        <tr><td>技术方案文档</td><td>技术方案.md、docs/调度算法建模.md</td><td>系统总览、Prompt 策略、完整数学模型</td></tr>
+        <tr><td>部署文档</td><td>docs/部署文档.md、deploy/</td><td>环境要求、配置项、离线运行、故障排查</td></tr>
+        <tr><td>演示界面</td><td>app/web/index.html</td><td>零框架依赖，含甘特图与执行态回写</td></tr>
+        <tr><td>实测数据</td><td>data 目录</td><td>基准 / 消融 / 下界 / L1 对照 / 布局体检</td></tr>
+        <tr><td>L1 标注集</td><td>data/l1_gold.json</td><td>20 道菜 / 148 步人工标注</td></tr>
+      </tbody>
+    </table>
+
+    <p><em>本报告全部数字均来自可复现的实测脚本，运行命令与产物路径见各节标注。</em></p>
+  </section>
+</body>
+</html>

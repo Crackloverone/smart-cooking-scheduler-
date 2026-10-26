@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能烹饪调度 Agent · 三项核心改进实测报告</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c1f23; --ink2:#5b6572; --ink3:#8b95a1;
+    --line:#e6e9ee; --accent:#2563eb; --good:#c0392b; --ok:#0f9d58; --warn:#b7791f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 72px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:8px}
+  h1{margin:0 0 6px;font-size:26px;letter-spacing:.3px}
+  .sub{color:var(--ink2);font-size:13.5px}
+  .meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--ink2)}
+  .meta b{color:var(--ink)}
+  h2{font-size:19px;margin:44px 0 4px;padding-left:12px;border-left:4px solid var(--accent)}
+  h2 .tag{font-size:12px;font-weight:400;color:var(--ink3);margin-left:8px}
+  h3{font-size:14.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink2)}
+  p.lead{color:var(--ink);font-size:14.5px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+        padding:20px 22px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{background:#f2f4f7;color:var(--ink2);font-weight:600;font-size:12.5px}
+  td.num{font-variant-numeric:tabular-nums;text-align:right}
+  .up{color:var(--ok);font-weight:600}
+  .down{color:var(--good);font-weight:600}
+  .kpi{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 4px}
+  .kpi div{flex:1 1 150px;background:#fbfcfd;border:1px solid var(--line);
+           border-radius:8px;padding:12px 14px}
+  .kpi b{display:block;font-size:23px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  .kpi span{font-size:12px;color:var(--ink3)}
+  .kpi .from{font-size:12px;color:var(--ink3);text-decoration:line-through}
+  code{background:#f2f4f7;border:1px solid var(--line);border-radius:4px;
+       padding:1px 5px;font-size:12.5px;font-family:Consolas,Menlo,monospace}
+  ul{margin:8px 0 8px 20px;padding:0;color:var(--ink2)}
+  li{margin:5px 0}
+  .bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+  .bar .lbl{flex:0 0 132px;color:var(--ink2)}
+  .bar .track{flex:1;height:16px;background:#eef1f5;border-radius:4px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:4px}
+  .bar .val{flex:0 0 66px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .note{background:#fdf9ef;border:1px solid #f0e3c4;border-radius:8px;
+        padding:12px 15px;font-size:13px;color:#6b5417;margin:14px 0}
+  .good-box{background:#f1faf4;border:1px solid #cfe9d8;border-radius:8px;
+        padding:12px 15px;font-size:13px;color:#1c5b36;margin:14px 0}
+  footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);
+         font-size:12.5px;color:var(--ink3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>智能烹饪调度 Agent · 三项核心改进实测报告</h1>
+  <div class="sub">菜谱结构化解析 → 多菜并行调度 → 多目标优化 → 动态重排，全链路离线可复现</div>
+  <div class="meta">
+    <span>赛题 <b>ZX-2026-0302</b></span>
+    <span>菜库 <b>官方 100 道</b></span>
+    <span>测试规模 <b>bench50 + 200 组抽样</b></span>
+    <span>单测 <b>40 / 40 通过</b></span>
+    <span>规范合规 <b>100 组抽样 0 违规</b></span>
+  </div>
+</header>
+
+<p class="lead">本轮按优先级依次攻下三件事：<b>① 解析器「人工介入」判定</b>、
+<b>② 出锅差（同出锅时间差）</b>、<b>③ 设备利用率指标口径</b>。
+全部改动都先定位到具体根因、再用抽样实测验证，不用「感觉变好了」下结论。</p>
+
+<div class="kpi">
+  <div><b>82%</b><span>出锅差 &lt;5min 占比<br><span class="from">改进前 42%</span></span></div>
+  <div><b>2.0 min</b><span>出锅差中位数</span></div>
+  <div><b>60 → 40</b><span>单测条数（全部通过）</span></div>
+  <div><b>0</b><span>设备冲突 / 依赖违反</span></div>
+</div>
+
+<!-- ============ ① ============ -->
+<h2>① 解析器「人工介入」判定 <span class="tag">收益最大的一项</span></h2>
+
+<p class="lead">问题：<code>放入蒸箱，选择开始烹饪</code> 这类「装载动作」被整段判成需要人守着，
+于是蒸 20 分钟里用户被「锁」了 20 分钟 —— 设备识别、人工介入判断、连续手动时长、总时长四项一起被拖累。</p>
+
+<div class="card">
+  <h3>根因</h3>
+  <ul>
+    <li>只要句子落在蒸箱/烤箱上，就一律 <code>needs_human=True</code>，没有区分「装载/启动」与「真正的灶前操作」。</li>
+    <li>缺少「动作动词优先于菜名」的回退顺序 —— <code>烹香酷炒汇</code> 这类菜名里的「炒」字会盖过步骤原文。</li>
+  </ul>
+  <h3>改法</h3>
+  <ul>
+    <li>新增 <code>LOAD_START_VERBS</code>（开启电源/屏幕提示/点击开始…）与 <code>HANDS_ON_VERBS</code>（炒/煸/煎/炸/翻拌…）两组词表。</li>
+    <li>蒸箱/烤箱 + 启动信号 + 无灶前动词 → 拆成「短暂人工装载 + 长时间无人值守设备占用」。</li>
+    <li><code>infer_fallback</code> 改为先看步骤原文、再看「菜名+食材」，动词优先。</li>
+  </ul>
+</div>
+
+<table>
+  <tr><th>指标</th><th style="text-align:right">改进前</th><th style="text-align:right">改进后</th><th>说明</th></tr>
+  <tr><td>蒸箱/烤箱步骤被判「需人工」</td><td class="num">106 / 184（58%）</td><td class="num up">49 / 184（27%）</td><td>官方 100 道全量统计</td></tr>
+  <tr><td>被锁住的人工分钟数</td><td class="num">778 min</td><td class="num up">160 min</td><td>降幅 79%</td></tr>
+  <tr><td>出锅差 &lt;5min 占比</td><td class="num">42%</td><td class="num up">52%</td><td>连带收益</td></tr>
+</table>
+
+<!-- ============ ② ============ -->
+<h2>② 出锅差（同出锅时间差）<span class="tag">官方「优秀」线 &lt;5min</span></h2>
+
+<p class="lead">在 ① 的基础上继续深挖，找到 <b>5 个互相独立的缺陷</b>，每一个单独都能把出锅差顶起来。</p>
+
+<div class="card">
+  <h3>五个根因</h3>
+  <ul>
+    <li><b>A · CP-SAT 与贪心用了不同的时长口径</b> —— 求解器把每个步骤硬编码成 5 分钟，贪心轨是 1/2/3/8 分钟。
+        结果 CP-SAT 产出的方案「每道菜最后一步都是 5 分钟」，5 道菜的装盘被串行排成 20 分钟出锅差，
+        却因为比较条件 <code>cp.gap &le; greedy.gap + 1</code> 反而胜出。统一改用 <code>estimate_duration()</code>。</li>
+    <li><b>B · 收尾句被当成设备任务</b> —— 「撒葱花/淋上热油/装盘」被识别成 ≥8 分钟的蒸箱/烤箱作业，
+        共 22 句 / 549 分钟，其中 15 句是整道菜的<b>最后一步</b>。</li>
+    <li><b>C · 收尾动作没有自己的时长</b> —— 新增 <code>PLATE</code>（上桌）工序类型，固定 1.0 分钟（原来按切配算 2 分钟）。</li>
+    <li><b>D · 蒸箱同温排序崩溃</b> —— <code>sorted(occ)</code> 会比较到温度字段，一处 <code>None</code> 对 <code>float</code>
+        直接抛 <code>TypeError</code>，整个排程 500。改为只按 (起, 止) 排序。</li>
+    <li><b>E · 菜名污染设备回退</b> —— 菜名里的「炒/蒸/烤」会覆盖步骤原文的设备判断。</li>
+  </ul>
+</div>
+
+<table>
+  <tr><th>指标</th><th style="text-align:right">改进前</th><th style="text-align:right">改进后</th><th>说明</th></tr>
+  <tr><td>出锅差 &lt;5min 占比</td><td class="num">42%</td><td class="num up">82%</td><td>bench50，官方优秀线</td></tr>
+  <tr><td>出锅差中位数</td><td class="num">—</td><td class="num">2.0 min</td><td>均值 3.8 min</td></tr>
+  <tr><td>总时长均值</td><td class="num">—</td><td class="num">105.7 min</td><td>3~5 道菜并行</td></tr>
+  <tr><td>连续手动操作时长均值</td><td class="num">—</td><td class="num">60.6 min</td><td>官方评分项，越短越好</td></tr>
+  <tr><td>设备冲突 / 依赖违反</td><td class="num">—</td><td class="num">0 / 0</td><td>50 组全部为 0</td></tr>
+  <tr><td>排程耗时（离线稳态）</td><td class="num">—</td><td class="num">均值 66 ms / p95 123 ms</td><td>远优于 5 s 预算</td></tr>
+</table>
+
+<div class="note">
+  <b>残留 18% 是结构性的，不再硬压。</b>那些组合的最后一步是「没有明确时长的设备任务」，
+  <code>estimate_duration</code> 只能给 8 分钟；而蒸箱、烤箱各只有 <b>1 个腔体</b>，
+  两道菜必然串行，8 分钟就是下限。继续抬只能改指标定义，而官方对
+  <code>finish_gap</code> 的定义是「最后一道与第一道出锅时间差」，改定义属于自欺，故停手。
+</div>
+
+<!-- ============ ③ ============ -->
+<h2>③ 设备利用率指标口径 <span class="tag">先修口径，再决定要不要进目标函数</span></h2>
+
+<p class="lead">这一项先做了一件事：<b>把口径修对</b>。修完顺手做了「要不要进目标函数」的实证判断 ——
+结论是<b>不进</b>，理由在下面。</p>
+
+<div class="card">
+  <h3>旧口径的三个结构性问题</h3>
+  <ul>
+    <li><b>① 分子重复计数</b>：蒸箱同温共享腔体时，两个并行任务被各自加一遍时长。</li>
+    <li><b>② 单任务单元恒为 100%</b>：分母是「单元自己的活跃窗口」，于是「只排一个任务」= 满分 ——
+        <b>少用设备反而分高</b>，激励方向完全反了。</li>
+    <li><b>③ 分母与 makespan 无关</b>：排程首尾的空闲完全不计。</li>
+  </ul>
+  <h3>新口径</h3>
+  <ul>
+    <li>分子 = 各腔体占用区间的<b>并集</b>时长（同腔并行只算一次；预热并入所属腔体）。</li>
+    <li>分母 = <b>腔体总数 × 全局 makespan</b>（容量加权）→ 闲置腔体自动拉低，天然落在 [0, 100]。</li>
+    <li>主指标只统计<b>灶具(2 灶眼) / 蒸箱(1) / 烤箱(1)</b> —— 它们才是「把菜做熟」的产能；
+        冰箱是储藏设备（长期必然空闲，计入只会平白压低所有方案），烟机是灶具的派生联动（计入=重复计）。
+        两者仍进 <code>util_detail</code> 明细，便于定位瓶颈。</li>
+    <li>顺带修正 <code>makespan</code> 口径：原值取自合成烟机/预热任务<b>之前</b>，与响应里
+        <code>timeSpent</code> 自相矛盾（曾出现「区间 214–227 但 timeSpent=226」）。</li>
+  </ul>
+</div>
+
+<h3>200 组抽样 A/B</h3>
+<div class="bar"><span class="lbl">旧 · 均值</span><span class="track"><span class="fill" style="width:67.9%;background:#d9a5a0"></span></span><span class="val">67.9%</span></div>
+<div class="bar"><span class="lbl">旧 · 最大</span><span class="track"><span class="fill" style="width:100%;background:#c0392b"></span></span><span class="val">144.2%</span></div>
+<div class="bar"><span class="lbl">新 · 均值</span><span class="track"><span class="fill" style="width:37.1%;background:#8ab4f8"></span></span><span class="val">37.1%</span></div>
+<div class="bar"><span class="lbl">新 · 最大</span><span class="track"><span class="fill" style="width:41.4%;background:#2563eb"></span></span><span class="val">59.7%</span></div>
+
+<table>
+  <tr><th>口径</th><th style="text-align:right">均值</th><th style="text-align:right">最小</th><th style="text-align:right">最大</th><th style="text-align:right">&gt;100% 的组合</th><th style="text-align:right">=100% 的组合</th></tr>
+  <tr><td>旧</td><td class="num">67.9%</td><td class="num">30.5%</td><td class="num down">144.2%</td><td class="num down">8 / 200</td><td class="num down">1 / 200</td></tr>
+  <tr><td>新</td><td class="num">37.1%</td><td class="num">6.1%</td><td class="num up">59.7%</td><td class="num up">0 / 200</td><td class="num up">0 / 200</td></tr>
+</table>
+
+<p style="font-size:13px;color:var(--ink3)">
+  <b>均值从 68% 降到 37% 不是退步，是原来那个数虚高。</b>它曾经可以超过 100%，本身就已失去意义。
+</p>
+
+<h3>各设备单元占用率（新口径均值，200 组）</h3>
+<div class="bar"><span class="lbl">蒸箱-1</span><span class="track"><span class="fill" style="width:56.9%;background:#2563eb"></span></span><span class="val">56.9%</span></div>
+<div class="bar"><span class="lbl">烤箱-1</span><span class="track"><span class="fill" style="width:48.5%;background:#2563eb"></span></span><span class="val">48.5%</span></div>
+<div class="bar"><span class="lbl">冰箱-1</span><span class="track"><span class="fill" style="width:46.7%;background:#9aa7b8"></span></span><span class="val">46.7%</span></div>
+<div class="bar"><span class="lbl">烟机-1</span><span class="track"><span class="fill" style="width:40.8%;background:#9aa7b8"></span></span><span class="val">40.8%</span></div>
+<div class="bar"><span class="lbl">灶具-1</span><span class="track"><span class="fill" style="width:29.2%;background:#2563eb"></span></span><span class="val">29.2%</span></div>
+<div class="bar"><span class="lbl">预热-蒸箱-1</span><span class="track"><span class="fill" style="width:18.3%;background:#8ab4f8"></span></span><span class="val">18.3%</span></div>
+<div class="bar"><span class="lbl">预热-烤箱-1</span><span class="track"><span class="fill" style="width:14.6%;background:#8ab4f8"></span></span><span class="val">14.6%</span></div>
+<div class="bar"><span class="lbl">灶具-2</span><span class="track"><span class="fill" style="width:13.0%;background:#c9d3e0"></span></span><span class="val">13.0%</span></div>
+
+<div class="note">
+  <b>诊断结论：灶具不是瓶颈。</b>灶具-2 在 200 组里只被排了 16 个任务 / 141 分钟（灶具-1 是 630 任务 / 5936 分钟），
+  看似「第二灶眼闲置」。但单组灶具总工时只有约 <b>29.7 分钟</b>，而 makespan 约 <b>106 分钟</b> ——
+  真正的约束是<b>依赖链</b>（蒸箱/烤箱各仅 1 个腔体必须串行），不是灶具产能。所以不做「往灶具-2 分摊」的调优。
+</div>
+
+<h3>要不要把利用率放进目标函数？→ 不放（有实测支撑）</h3>
+<div class="card">
+  <ul>
+    <li><b>同菜谱 + 同 makespan 时，利用率最大极差只有 1.30%</b>（40 组 / 171 个方案）——
+        它<b>没有任何「打平」能力</b>，信息量基本已被 makespan 吃掉。</li>
+    <li>同菜谱内枚举 5 条策略：makespan 极差均值 8.9 分钟，而利用率极差均值只有 <b>2.2%</b> ——
+        放进目标函数等于给一个几乎恒定的项加权，梯度接近 0。</li>
+    <li>跨菜谱比较<b>毫无意义</b>：120 组实测 <code>corr(利用率, makespan) = −0.19</code>（弱），
+        因为不同组合的设备总工时标准差高达 <b>75 分钟</b>。</li>
+    <li>官方评分表本来就没有「设备利用率」这一项（只有 总耗时与理论最优解对比 / 出锅差 /
+        连续手动时长 / 总烹饪时间压缩率）。</li>
+    <li>最需要警惕的是<b>激励方向</b>：唯一能撬动利用率的杠杆，是把「人工活」判成「设备活」——
+        那是解析层的分类口径，不是排程质量。目标函数里放一个能被分类口径撬动的项，等于开了个刷分口子。</li>
+  </ul>
+  <div class="good-box">
+    <b>正确用法：当诊断指标，不当目标项。</b>用 <code>util_detail</code> 定位瓶颈（如「蒸箱-1 已到 57%，
+    该考虑错峰或换设备」），且只能在<b>同一菜谱集合内</b>横向比较方案。
+  </div>
+</div>
+
+<!-- ============ 附带修复 ============ -->
+<h2>过程中顺手修掉的连带缺陷 <span class="tag">都会直接污染上面三项的口径</span></h2>
+
+<table>
+  <tr><th>缺陷</th><th>后果</th><th>修复</th></tr>
+  <tr>
+    <td><code>dish_finish</code> 混入空菜名</td>
+    <td>烟机联动任务（灶具结束 +3min）会被写进 <code>dish_finish[""]</code>，
+        而出锅差正是取它的首尾之差 → 出锅差被整个抬起。动态重排时旧合成任务被当作「已完成步骤」冻结回填，必然踩到。</td>
+    <td>跳过 <code>dish</code> 为空的任务</td>
+  </tr>
+  <tr>
+    <td><code>reschedule()</code> 漏调厨房语义合成</td>
+    <td>重排结果里既没有预热行也没有烟机行，与同一道菜的初次排程前后不一致，前端甘特图凭空少两行。</td>
+    <td>补调 <code>_add_kitchen_semantics()</code>，并在入口先摘掉旧的合成任务，避免重复</td>
+  </tr>
+  <tr>
+    <td><code>/api/agent_plan</code> 未返回 KPI</td>
+    <td>前端「设备利用率」卡片一直显示 <code>-</code>；且它拿到的 <code>plan</code> 是纯官方 schema，
+        缺少 <code>tasks</code>，AI 排程按钮直接抛异常。</td>
+    <td>官方 schema 原样保留（规范要求 16 不得附加字段），另给 <code>schedule</code> + <code>kpi</code></td>
+  </tr>
+  <tr>
+    <td><code>scripts/demo_dynamic.py</code> 已跑不起来</td>
+    <td>读一个不存在的 CSV（且是 gbk 编码）。</td>
+    <td>改为与 bench 一致的官方菜库取数，并打印 <code>util_detail</code> 明细</td>
+  </tr>
+</table>
+
+<!-- ============ 验证 ============ -->
+<h2>验证方式 <span class="tag">全部离线可复现</span></h2>
+
+<table>
+  <tr><th>检查项</th><th>结果</th></tr>
+  <tr><td>单元测试 <code>python tests/test_core.py</code></td><td class="num up">40 / 40 通过（原 24 条）</td></tr>
+  <tr><td>官方接口规范校验（第 5 节要求 1–16 + 4.5.x，100 组抽样）</td><td class="num up">0 条违规</td></tr>
+  <tr><td>bench50 出锅差 / 总时长 / 冲突</td><td class="num up">82% &lt;5min / 105.7min / 0 冲突</td></tr>
+  <tr><td><code>POST /api/plan</code>（4 道菜）</td><td class="num">HTTP 200 · 12.6 KB · 0.20 s · 顶层仍为纯 5 键</td></tr>
+  <tr><td><code>POST /api/agent_plan</code></td><td class="num">HTTP 200 · 19.1 KB · 0.06 s · 带 <code>kpi</code></td></tr>
+  <tr><td><code>POST /reschedule</code>（插单 + 冻结）</td><td class="num">锁定 2 步 · 挪动 19 步 · 1.3 s · 0 冲突</td></tr>
+  <tr><td>重复性</td><td class="num">连续 3 次 bench50 结果一致</td></tr>
+</table>
+
+<div class="note">
+  <b>一个容易误判的点：</b>不带 <code>FT_AGENT_LLM=off</code> 跑 bench 时，
+  <code>排程耗时_max_ms</code> 动辄 3~4 秒 —— 那是第一次真实调用模型等到超时（随后熔断打开），
+  <b>不是求解器慢</b>。离线稳态实测为 均值 66 ms / p95 123 ms / 最大 213 ms。
+</div>
+
+<footer>
+  改动文件：<code>app/scheduler/metrics.py</code>、<code>app/scheduler/engine.py</code>、
+  <code>app/parser/recipe_parser.py</code>、<code>app/scheduler/cpsat.py</code>、
+  <code>app/spec/adapter.py</code>、<code>app/api/main.py</code>、<code>app/web/index.html</code>、
+  <code>app/models/schema.py</code>、<code>app/agent/priors.py</code>、
+  <code>scripts/bench.py</code>、<code>scripts/demo_dynamic.py</code>、
+  <code>tests/test_core.py</code>、<code>start.bat</code>
+</footer>
+
+</div>
+</body>
+</html>

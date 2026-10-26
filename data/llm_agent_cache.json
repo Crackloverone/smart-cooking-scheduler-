@@ -1,0 +1,1412 @@
+{
+ "enrich::原味墨西哥面包": {
+  "2": {
+   "device": "烤箱",
+   "temperature": "35-40",
+   "duration_min": "60-120",
+   "mode": "发酵"
+  },
+  "3": {
+   "device": "烤箱",
+   "temperature": "35-40",
+   "duration_min": "40-90",
+   "mode": "发酵"
+  },
+  "7": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "烘焙"
+  }
+ },
+ "enrich::韩式泡菜鸦片鱼头": {
+  "1": {
+   "device": "灶具",
+   "temperature": 90,
+   "duration_min": 0.25,
+   "mode": "烫制"
+  },
+  "3": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 5,
+   "mode": "翻炒烹煮"
+  },
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::巴斯克蛋糕": {
+  "1": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "小火"
+  },
+  "6": {
+   "device": "烤箱",
+   "temperature": 220,
+   "duration_min": 25,
+   "mode": "上下火"
+  },
+  "7": {
+   "device": "冰箱",
+   "temperature": 4,
+   "duration_min": 120,
+   "mode": "冷藏"
+  }
+ },
+ "enrich::芝士番茄土豆泥": {},
+ "enrich::玛格丽特": {
+  "1": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 15,
+   "mode": "煮"
+  },
+  "4": {
+   "device": "烤箱",
+   "temperature": 170,
+   "duration_min": 15,
+   "mode": "烘烤"
+  }
+ },
+ "enrich::柠檬干": {
+  "3": {
+   "device": "蒸箱",
+   "temperature": 60,
+   "duration_min": 120,
+   "mode": "烘干"
+  }
+ },
+ "enrich::松子枣泥拉糕": {},
+ "enrich::美式薯条": {
+  "2": {
+   "device": "烤箱",
+   "temperature": 200,
+   "duration_min": 20,
+   "mode": "热风烤"
+  }
+ },
+ "enrich::葱香土豆泥": {
+  "2": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": 180,
+   "duration_min": 5,
+   "mode": "炒"
+  }
+ },
+ "enrich::轻松一锅蒸": {
+  "11": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 20,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::披萨面团": {},
+ "enrich::珍珠爆浆蛋糕": {},
+ "enrich::红豆糯米糕": {
+  "1": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "隔水加热"
+  },
+  "4": {
+   "device": "烤箱",
+   "temperature": 150,
+   "duration_min": 20,
+   "mode": "烘焙"
+  }
+ },
+ "enrich::竹荪排骨汤": {},
+ "enrich::三味蒸鳗鱼&香茅烤鳗鱼同烹": {
+  "5": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "大火"
+  },
+  "12": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "热风烤"
+  }
+ },
+ "enrich::糖霜饼干": {
+  "4": {
+   "device": "冰箱",
+   "temperature": -18,
+   "duration_min": 30,
+   "mode": "冷冻"
+  },
+  "6": {
+   "device": "烤箱",
+   "temperature": 150,
+   "duration_min": 12,
+   "mode": "烘烤"
+  }
+ },
+ "enrich::麻辣对虾": {
+  "2": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "炒"
+  },
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 8,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::法式羊排": {
+  "1": {
+   "device": "烤箱",
+   "temperature": 200,
+   "duration_min": 20,
+   "mode": "热风烤"
+  }
+ },
+ "enrich::本帮白切鸡": {
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": "小火",
+   "duration_min": 30,
+   "mode": "煮"
+  },
+  "6": {
+   "device": "灶具",
+   "temperature": "中小火",
+   "duration_min": 10,
+   "mode": "煮"
+  }
+ },
+ "enrich::广式月饼（台式）": {},
+ "enrich::拿破仑酥": {
+  "1": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 10,
+   "mode": "普通加热"
+  },
+  "8": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "烘焙"
+  }
+ },
+ "enrich::抹茶红豆白玉卷": {},
+ "enrich::血糯米仙草奶茶": {
+  "2": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 10,
+   "mode": "小火煮"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "小火加热搅拌"
+  },
+  "8": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 30,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::黑森林蛋糕": {},
+ "enrich::紫甘蓝沙拉": {
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::糯米烧麦": {
+  "2": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 40,
+   "mode": "普通蒸"
+  },
+  "3": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 15,
+   "mode": "水煮"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 10,
+   "mode": "翻炒"
+  },
+  "10": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 10,
+   "mode": "普通蒸"
+  }
+ },
+ "prior::鸡仔饼": {
+  "dish": "鸡仔饼",
+  "serve_hot": 0.85,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   5,
+   6
+  ],
+  "human_load": 0.02,
+  "source": "llm-cache",
+  "reason": "烤制点心需控温，趁热食用风味佳"
+ },
+ "prior::低温牛排": {
+  "dish": "低温牛排",
+  "serve_hot": 0.95,
+  "hold_min": 6.0,
+  "prep_step_ids": [
+   1,
+   3
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "",
+  "interruptible": true,
+  "heat_critical": [
+   4
+  ],
+  "human_load": 0.86,
+  "source": "llm-cache",
+  "reason": "煎制火候关键，需趁热上桌"
+ },
+ "prior::金龙吐瑞": {
+  "dish": "金龙吐瑞",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 8.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5,
+   6
+  ],
+  "human_load": 0.44,
+  "source": "llm-cache",
+  "reason": "清蒸鱼需趁热，蒸制过程可离人"
+ },
+ "prior::鸡翅包饭": {
+  "dish": "鸡翅包饭",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 6.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   9
+  ],
+  "human_load": 0.5,
+  "source": "llm-cache",
+  "reason": "烤箱180℃烤制，可提前备料合炉"
+ },
+ "prior::苹果芒果派": {
+  "dish": "苹果芒果派",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "prep_lead_min": 18.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   12,
+   13
+  ],
+  "human_load": 0.4,
+  "source": "llm-cache",
+  "reason": "提前备料，烤箱180℃烤，出炉趁热食用"
+ },
+ "prior::酿苦瓜": {
+  "dish": "酿苦瓜",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 10.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，可提前备料，蒸好即食"
+ },
+ "prior::椰香苹果香蕉烤燕麦": {
+  "dish": "椰香苹果香蕉烤燕麦",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2
+  ],
+  "prep_lead_min": 6.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 0.36,
+  "source": "llm-cache",
+  "reason": "烤箱烤制，预处理可提前，需趁热食用"
+ },
+ "prior::双椒鳙鱼头": {
+  "dish": "双椒鳙鱼头",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5,
+   6
+  ],
+  "human_load": 0.44,
+  "source": "llm-cache",
+  "reason": "清蒸为主，需趁热淋油上桌"
+ },
+ "prior::家常鲈鱼": {
+  "dish": "家常鲈鱼",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 6.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5,
+   7,
+   8
+  ],
+  "human_load": 0.33,
+  "source": "llm-cache",
+  "reason": "清蒸定时，出锅后快速浇油调味上桌"
+ },
+ "prior::豉汁蒸草鱼": {
+  "dish": "豉汁蒸草鱼",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 12.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   4,
+   5,
+   6
+  ],
+  "human_load": 0.31,
+  "source": "llm-cache",
+  "reason": "蒸制可离人，需趁热淋油上桌"
+ },
+ "prior::椰汁红豆砵仔糕": {
+  "dish": "椰汁红豆砵仔糕",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   5
+  ],
+  "prep_lead_min": 8.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   3,
+   4,
+   6
+  ],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "蒸制糕点，趁热食用，可提前备浆"
+ },
+ "prior::鸡蛋黄油饼干": {
+  "dish": "鸡蛋黄油饼干",
+  "serve_hot": 0.7,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "prep_lead_min": 16.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   11,
+   12
+  ],
+  "human_load": 0.28,
+  "source": "llm-cache",
+  "reason": "提前备好生坯，烤箱180℃定时烤"
+ },
+ "prior::香烤排骨": {
+  "dish": "香烤排骨",
+  "serve_hot": 0.95,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   4
+  ],
+  "human_load": 0.23,
+  "source": "llm-cache",
+  "reason": "腌制可提前，烤制需控温，趁热上桌"
+ },
+ "prior::栗子冰皮月饼": {
+  "dish": "栗子冰皮月饼",
+  "serve_hot": 0.1,
+  "hold_min": 180.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "prep_lead_min": 14.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   9,
+   10
+  ],
+  "human_load": 0.84,
+  "source": "llm-cache",
+  "reason": "冰皮需蒸制，馅料面糊可提前备"
+ },
+ "prior::麻辣对虾": {
+  "dish": "麻辣对虾",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 12.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   4,
+   5
+  ],
+  "human_load": 0.91,
+  "source": "llm-cache",
+  "reason": "蒸制海鲜需趁热，前三步可提前备"
+ },
+ "prior::香菜黄油烤明虾": {
+  "dish": "香菜黄油烤明虾",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 9.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   5,
+   6,
+   7
+  ],
+  "human_load": 0.35,
+  "source": "llm-cache",
+  "reason": "烤箱分段烘烤，需趁热上桌"
+ },
+ "prior::黄油小饼干": {
+  "dish": "黄油小饼干",
+  "serve_hot": 0.7,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "prep_lead_min": 14.0,
+  "merge_group": "烤箱@170",
+  "interruptible": true,
+  "heat_critical": [
+   10,
+   11
+  ],
+  "human_load": 0.44,
+  "source": "llm-cache",
+  "reason": "可提前备坯，烤箱定温定时烘烤"
+ },
+ "prior::豆豉蒸腐竹": {
+  "dish": "豆豉蒸腐竹",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   3,
+   5
+  ],
+  "human_load": 0.26,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，提前备料，炒蒸关键"
+ },
+ "prior::快手香蕉派": {
+  "dish": "快手香蕉派",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   3
+  ],
+  "human_load": 0.25,
+  "source": "llm-cache",
+  "reason": "烤制派类需趁热，可提前备料合炉烤"
+ },
+ "prior::芋头蛋卷": {
+  "dish": "芋头蛋卷",
+  "serve_hot": 0.9,
+  "hold_min": 5.0,
+  "prep_step_ids": [
+   1,
+   3
+  ],
+  "prep_lead_min": 10.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   2,
+   4,
+   5
+  ],
+  "human_load": 0.81,
+  "source": "llm-cache",
+  "reason": "蛋卷宜趁热，煎蒸时可兼顾他菜"
+ },
+ "prior::拿破仑酥": {
+  "dish": "拿破仑酥",
+  "serve_hot": 0.1,
+  "hold_min": 120.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "prep_lead_min": 0.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   8
+  ],
+  "human_load": 0.04,
+  "source": "llm-cache",
+  "reason": "冷食甜点，可提前备料，烤箱合烤"
+ },
+ "prior::五味乌鸡煲": {
+  "dish": "五味乌鸡煲",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "prep_lead_min": 10.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   6,
+   7
+  ],
+  "human_load": 0.62,
+  "source": "llm-cache",
+  "reason": "蒸制乌鸡煲，提前备料，蒸好趁热上桌"
+ },
+ "prior::榴莲酥": {
+  "dish": "榴莲酥",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1
+  ],
+  "prep_lead_min": 0.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "半成品烤制，可提前备料，自动加热即可"
+ },
+ "prior::小碗蒸肉": {
+  "dish": "小碗蒸肉",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "prep_lead_min": 10.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   9,
+   11
+  ],
+  "human_load": 0.78,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，提前备料，蒸好即食"
+ },
+ "prior::豆豉蒸腐竹（台式）": {
+  "dish": "豆豉蒸腐竹（台式）",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   3,
+   5
+  ],
+  "human_load": 0.17,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，预处理后可合炉蒸制"
+ },
+ "prior::广式月饼（台式）": {
+  "dish": "广式月饼（台式）",
+  "serve_hot": 0.1,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "prep_lead_min": 8.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   6,
+   7
+  ],
+  "human_load": 0.2,
+  "source": "llm-cache",
+  "reason": "烤后需回油，可提前备料分步做"
+ },
+ "prior::Q弹果冻鸡蛋羹": {
+  "dish": "Q弹果冻鸡蛋羹",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "prep_lead_min": 12.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   6
+  ],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，加热可离人，出锅需趁热上桌"
+ },
+ "prior::韩式泡菜鸦片鱼头": {
+  "dish": "韩式泡菜鸦片鱼头",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 2.5,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   4,
+   5
+  ],
+  "human_load": 0.72,
+  "source": "llm-cache",
+  "reason": "蒸鱼需趁热，可提前备料做汤"
+ },
+ "prior::南瓜鸡腿煲": {
+  "dish": "南瓜鸡腿煲",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "prep_lead_min": 16.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   10,
+   11
+  ],
+  "human_load": 0.74,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，预处理可前置，出锅后需尽快上桌"
+ },
+ "prior::松子枣泥拉糕": {
+  "dish": "松子枣泥拉糕",
+  "serve_hot": 0.8,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 0.02,
+  "source": "llm-cache",
+  "reason": "蒸制甜点，可提前备料，蒸时无需值守"
+ },
+ "prior::轻松一锅蒸": {
+  "dish": "轻松一锅蒸",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "prep_lead_min": 12.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   3,
+   11
+  ],
+  "human_load": 0.45,
+  "source": "llm-cache",
+  "reason": "多菜同蒸，定时即可，出锅需趁热"
+ },
+ "prior::清蒸火焙鱼": {
+  "dish": "清蒸火焙鱼",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   2
+  ],
+  "prep_lead_min": 13.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   4,
+   5
+  ],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "清蒸需趁热，可提前备料，蒸时人可离"
+ },
+ "prior::美式薯条": {
+  "dish": "美式薯条",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   2
+  ],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "烤薯条易软，需趁热出，可提前备架入炉"
+ },
+ "prior::蒜香烤茄子": {
+  "dish": "蒜香烤茄子",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   2,
+   4
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   1,
+   3,
+   5
+  ],
+  "human_load": 1.0,
+  "source": "llm-cache",
+  "reason": "两次烤箱烘烤，酱料可提前备，需趁热上桌"
+ },
+ "prior::葱香土豆泥": {
+  "dish": "葱香土豆泥",
+  "serve_hot": 0.9,
+  "hold_min": 6.0,
+  "prep_step_ids": [
+   1,
+   4
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 0.9,
+  "source": "llm-cache",
+  "reason": "蒸土豆可提前，炒制需守火候趁热上"
+ },
+ "prior::酿莴苣": {
+  "dish": "酿莴苣",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "prep_lead_min": 16.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   8,
+   9
+  ],
+  "human_load": 0.67,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，提前备馅，蒸好即食"
+ },
+ "prior::虾米豆豉蒸排骨": {
+  "dish": "虾米豆豉蒸排骨",
+  "serve_hot": 0.9,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   2,
+   3
+  ],
+  "prep_lead_min": 22.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 0.53,
+  "source": "llm-cache",
+  "reason": "蒸制菜品，提前备料腌制，蒸好趁热上桌"
+ },
+ "prior::祛寒羊肉汤": {
+  "dish": "祛寒羊肉汤",
+  "serve_hot": 0.45,
+  "hold_min": 45.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   4,
+   5
+  ],
+  "human_load": 0.69,
+  "source": "llm-cache",
+  "reason": "炖汤可提前备料，蒸烤过程无需值守"
+ },
+ "prior::半熟芝士蛋糕": {
+  "dish": "半熟芝士蛋糕",
+  "serve_hot": 0.7,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "prep_lead_min": 12.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   10,
+   11
+  ],
+  "human_load": 0.38,
+  "source": "llm-cache",
+  "reason": "烤箱烘焙，可提前备料，烤好即取脱模"
+ },
+ "prior::双椒鳙鱼头（台式）": {
+  "dish": "双椒鳙鱼头（台式）",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   5,
+   6
+  ],
+  "human_load": 0.44,
+  "source": "llm-cache",
+  "reason": "蒸制后淋热油，需趁热上桌"
+ },
+ "prior::广式叉烧": {
+  "dish": "广式叉烧",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 4.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 0.02,
+  "source": "llm-cache",
+  "reason": "腌制及烤前准备可提前，烤后需趁热上桌"
+ },
+ "prior::碳烤基围虾": {
+  "dish": "碳烤基围虾",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   5
+  ],
+  "human_load": 0.81,
+  "source": "llm-cache",
+  "reason": "提前备料，烤箱自动烤无需值守"
+ },
+ "prior::清蒸鲈鱼": {
+  "dish": "清蒸鲈鱼",
+  "serve_hot": 0.95,
+  "hold_min": 10.0,
+  "prep_step_ids": [
+   1,
+   2
+  ],
+  "prep_lead_min": 2.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   3,
+   5
+  ],
+  "human_load": 0.18,
+  "source": "llm-cache",
+  "reason": "清蒸控时，出锅趁热淋油即食"
+ },
+ "prior::芝士番茄土豆泥": {
+  "dish": "芝士番茄土豆泥",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   5
+  ],
+  "prep_lead_min": 18.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   3,
+   6,
+   12,
+   13
+  ],
+  "human_load": 0.68,
+  "source": "llm-cache",
+  "reason": "烤制菜品，提前备料，烤好即食"
+ },
+ "prior::草莓蛋挞": {
+  "dish": "草莓蛋挞",
+  "serve_hot": 0.9,
+  "hold_min": 15.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "prep_lead_min": 14.0,
+  "merge_group": "烤箱@180",
+  "interruptible": true,
+  "heat_critical": [
+   9,
+   10,
+   11
+  ],
+  "human_load": 0.66,
+  "source": "llm-cache",
+  "reason": "提前备好布丁液，烤箱180℃定时烤制"
+ },
+ "prior::竹荪排骨汤": {
+  "dish": "竹荪排骨汤",
+  "serve_hot": 0.45,
+  "hold_min": 45.0,
+  "prep_step_ids": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "prep_lead_min": 6.0,
+  "merge_group": "蒸箱@100",
+  "interruptible": true,
+  "heat_critical": [
+   7,
+   8
+  ],
+  "human_load": 0.84,
+  "source": "llm-cache",
+  "reason": "蒸制炖汤，预处理可前置，蒸时人可离"
+ },
+ "enrich::鸡翅包饭": {},
+ "enrich::家常鲈鱼": {},
+ "enrich::豆豉蒸腐竹（台式）": {},
+ "enrich::金银蒜蒸鸡胸肉": {},
+ "enrich::蒜蓉粉丝蒸扇贝": {},
+ "enrich::金龙吐瑞": {},
+ "enrich::豉汁蒸草鱼": {},
+ "enrich::豆豉蒸腐竹": {},
+ "enrich::酿莴苣": {},
+ "enrich::银鱼蒸蛋": {},
+ "enrich::蒜蓉粉丝烤茄子": {},
+ "enrich::香菇烤芦笋": {},
+ "enrich::鸡仔饼": {},
+ "enrich::鸡蛋黄油饼干": {},
+ "enrich::栗子冰皮月饼": {},
+ "enrich::五味乌鸡煲": {},
+ "enrich::虾米豆豉蒸排骨": {},
+ "enrich::半熟芝士蛋糕": {},
+ "enrich::清蒸鲈鱼": {},
+ "enrich::蔬菜塔": {},
+ "enrich::清蒸带鱼": {},
+ "enrich::大理石饼干": {},
+ "enrich::烤鱿鱼干": {},
+ "enrich::香烤鲫鱼": {},
+ "enrich::秘制叉烧": {},
+ "enrich::苹果芒果派": {},
+ "enrich::香菜黄油烤明虾": {},
+ "enrich::蒜香烤茄子": {},
+ "enrich::黄油小饼干": {},
+ "enrich::祛寒羊肉汤": {},
+ "enrich::广式叉烧": {},
+ "enrich::碳烤基围虾": {},
+ "enrich::香辣烤小龙虾": {},
+ "enrich::嫩烤鸡胸肉": {},
+ "enrich::蒸咸蛋酿苦瓜": {
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 5,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::油醋汁剁肉饼蒸和乐蟹": {
+  "6": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  },
+  "7": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::茯苓饼干": {
+  "4": {
+   "device": "烤箱",
+   "temperature": 150,
+   "duration_min": 30,
+   "mode": "全开烤"
+  }
+ },
+ "enrich::红枣酥饼": {
+  "15": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 17,
+   "mode": "常规烘焙"
+  }
+ },
+ "enrich::蜜豆卷馒头": {
+  "10": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::椰香苹果香蕉烤燕麦": {
+  "5": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "上下火烤"
+  }
+ },
+ "enrich::椰汁红豆砵仔糕": {
+  "3": {
+   "device": "灶具",
+   "temperature": null,
+   "duration_min": 5,
+   "mode": "大火煮沸"
+  },
+  "6": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 20,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::芋头蛋卷": {
+  "2": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 20,
+   "mode": "普通蒸"
+  },
+  "4": {
+   "device": "灶具",
+   "temperature": null,
+   "duration_min": 3,
+   "mode": "煎"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": null,
+   "duration_min": 1,
+   "mode": "余温加热"
+  }
+ },
+ "enrich::小碗蒸肉": {
+  "3": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "煎"
+  },
+  "6": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "煸炒"
+  },
+  "7": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 3,
+   "mode": "炒糖色"
+  },
+  "9": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 20,
+   "mode": "炖煮"
+  },
+  "11": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 20,
+   "mode": "普通蒸"
+  }
+ },
+ "enrich::草莓蛋挞": {},
+ "enrich::立夏饭": {},
+ "enrich::烹香酷炒汇": {},
+ "enrich::荷叶蒸蟹饭": {},
+ "enrich::培根披萨": {
+  "12": {
+   "device": "烤箱",
+   "temperature": 35,
+   "duration_min": 30,
+   "mode": "发酵"
+  },
+  "17": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 10,
+   "mode": "常规烘焙"
+  }
+ },
+ "enrich::豆沙手撕包": {}
+}

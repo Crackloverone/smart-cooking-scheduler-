@@ -1,0 +1,2135 @@
+[
+  {
+    "name": "秋梨膏",
+    "ingredients": [
+      "主料：梨肉1000g（（切块））",
+      "红枣肉20g",
+      "冰糖30g",
+      "罗汉果1个（（压碎））",
+      "川贝粉10g",
+      "姜丝25g"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "主锅中加入梨块，盖上锅盖和量杯，设置：10秒/7档榨汁，结束后用刮刀将锅内壁食材刮至锅底",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "榨汁",
+        "temperature_c": null,
+        "duration_min": 0.17,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "主锅中加入红枣肉、冰糖、罗汉果和姜丝，盖上锅盖和量杯，设置：10分钟/120℃/3档加热；再设置：30分钟/100℃/1档熬煮。结束后，用刮刀取出食材用纱布过滤出梨汁备用并洗净主锅",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "熬煮",
+        "temperature_c": 120.0,
+        "duration_min": 10.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "（主锅中）加入过滤好的梨汁和川贝粉，盖上锅盖并放上滤网篮，设置：10分钟/140℃/1档熬煮；再设置：30分钟/105℃/1档慢煮，熬至粘稠；烹饪结束，用刮刀取出秋梨膏倒入无水容器，放入冰箱冷藏2小时即可享用",
+        "device": "冰箱",
+        "device_source": "冷藏",
+        "mode": "熬煮",
+        "temperature_c": 140.0,
+        "duration_min": 120.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "等待",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "下午茶、晚餐、地方风味、甜、儿童、老人、助眠"
+  },
+  {
+    "name": "蔬菜焗蝴蝶面",
+    "ingredients": [
+      "A料：蝴蝶面300克",
+      "西葫芦150克",
+      "茄子150克",
+      "番茄1个",
+      "洋葱末100克",
+      "B料：迷迭香5克",
+      "马苏里拉芝士碎30克",
+      "盐2克",
+      "番茄酱75克",
+      "黑胡椒3克",
+      "橄榄油10毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "把番茄丁、盐、迷迭香、黑胡椒和番茄酱混合搅拌成酱汁备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "洋葱末加入盐和黑胡椒搅匀备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "把西葫芦和茄子切片",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将蝴蝶面煮至偏好的软硬度后捞出备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "在刷过橄榄油的碗中铺上一层番茄酱汁",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "放入蝴蝶面、西葫芦",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "再放上一层番茄酱汁、蝴蝶面",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "最后，再放上茄子片、洋葱末、马苏里拉芝士碎",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 9,
+        "raw_text": "放入烤箱中",
+        "device": "烤箱",
+        "device_source": "烤箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          8
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 10,
+        "raw_text": "选择“完全烧烤”模式，以200℃烤15分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 200.0,
+        "duration_min": 15.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          9
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "早餐、下午茶、西餐风味、清淡、咸香、儿童、上班族、更年期、老人、健胃消食、减脂、便秘"
+  },
+  {
+    "name": "牛筋彩椒串",
+    "ingredients": [
+      "主料：熟牛蹄筋100克",
+      "辅料：圆椒1个",
+      "红彩椒1个",
+      "盐2克",
+      "烧烤粉5克",
+      "辣椒粉5克",
+      "孜然粉5克",
+      "食用油10毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "将洗净的彩椒和圆椒切成2厘米见方的小块，待用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "依次将牛蹄筋块、圆椒、彩椒穿到竹签上，待用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "在烤盘中铺上锡纸，在烧烤架上刷适量食用油，把串放到烤架上，置入烤箱中",
+        "device": "烤箱",
+        "device_source": "烤箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "选择“完全烧烤”模式，以200℃烤3分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 200.0,
+        "duration_min": 3.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "选择“完全烧烤”模式，以200℃烤1分钟，取出装入盘中即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 200.0,
+        "duration_min": 1.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、西餐风味、辣、上班族"
+  },
+  {
+    "name": "家常鲈鱼",
+    "ingredients": [
+      "主料：鲈鱼600克（约1条）",
+      "辅料：干辣椒段8克",
+      "姜丝10克",
+      "姜片15克",
+      "葱段10克",
+      "葱丝10克",
+      "蒸鱼豉油20毫升",
+      "胡椒粉3克",
+      "食用油10毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "将宰杀处理干净的鲈鱼两面划上一字花刀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "将葱段、姜片一起铺在盘子上，然后将鲈鱼放在上面",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "鱼腹中放一些葱段和姜片；鱼背上放上一些葱段和姜丝",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将鲈鱼放入蒸盘中，再放入蒸箱",
+        "device": "蒸箱",
+        "device_source": "蒸箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "选择“普通蒸”模式，以100℃蒸8分钟至熟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "普通蒸",
+        "temperature_c": 100.0,
+        "duration_min": 8.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "打开箱门，将蒸好的鲈鱼取出，将盘底的少量汁水慢慢地倒掉，将鱼背上的葱段和姜丝去掉，再撒上葱丝和干辣椒段",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "将炒锅中倒入食用油烧热，加热至沸腾后浇在鲈鱼背上",
+        "device": "灶具",
+        "device_source": "炒锅",
+        "mode": "爆炒",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "再浇上蒸鱼豉油即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "清蒸",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、川湘菜、东北菜、粤菜、江浙菜、清淡、鲜美、儿童、上班族、更年期、老人、养胃"
+  },
+  {
+    "name": "红糖姜枣茶",
+    "ingredients": [
+      "主料：生姜25g",
+      "红枣30g",
+      "红糖35g",
+      "水800g"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "主锅中加入姜片、红枣、红糖和水，盖上锅盖和量杯，设置：25分钟/100℃/1档（反转）。烹饪结束，取出即可饮用",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "",
+        "temperature_c": 100.0,
+        "duration_min": 25.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      }
+    ],
+    "label": "下午茶、川湘菜、甜、辣、上班族、更年期、养胃、助眠、贫血"
+  },
+  {
+    "name": "杏仁瓦片小饼干",
+    "ingredients": [
+      "A料：蛋清18g",
+      "B料：白砂糖35g",
+      "杏仁片40g",
+      "黄油6g",
+      "低筋粉5g"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "蛋清和糖用刮刀拌匀，加入杏仁片拌匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "加入融化的黄油，拌匀，静置半小时以上",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "加入低筋面粉拌匀，静置",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将面糊摊平到烤盘上，要厚薄一致",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "选择“开始烹饪”按键，按屏幕提示操作。根据上色程度微调时间",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "下午茶、西餐风味、甜、上班族、儿童、养胃"
+  },
+  {
+    "name": "蚝油生菜",
+    "ingredients": [
+      "主料：淀粉5g",
+      "水720g",
+      "盐2小勺",
+      "食用油20g",
+      "生菜500g",
+      "蒜蓉10g",
+      "蚝油20g"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "取一小碗加入淀粉和20g水混匀，制成水淀粉。主锅中加入700g水、盐和5g食用油，盖上锅盖和量杯，设置：6分钟/140℃/1档加热。加入生菜，盖上锅盖和量杯，设置：2分钟/140℃/1档（反转）焯水。结束后，取出生菜摆放在盘中",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "",
+        "temperature_c": 140.0,
+        "duration_min": 6.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "主锅洗净，加入15g食用油和蒜蓉，盖上锅盖，不要放量杯，设置：2分钟/140℃/1档（反转）煸炒",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "煸炒",
+        "temperature_c": 140.0,
+        "duration_min": 2.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "加入蚝油和水淀粉，盖上锅盖，不要放量杯，设置：30秒/100℃/1档（反转）勾芡。烹饪结束后，将酱汁淋在生菜上即可享用",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": 100.0,
+        "duration_min": 0.5,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、川湘菜、江浙菜、清淡、上班族、更年期、老人、健胃消食、减脂、减脂、便秘、便秘"
+  },
+  {
+    "name": "脆香猪排",
+    "ingredients": [
+      "主料：猪里脊肉350克",
+      "鸡蛋1个",
+      "生菜1颗",
+      "辅料：面包糠70克",
+      "生粉20克",
+      "盐2克",
+      "日式酱油15毫升",
+      "食用油10毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "猪里脊肉切成约1.5厘米厚的片，用刀背拍松；生菜叶切丝待用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "装入碗中，加盐、日式酱油，拌匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "鸡蛋打入碗中，制成蛋液",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将切好的猪里脊肉依次蘸上蛋液、淀粉",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "再蘸上面包糠",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "烤盘上垫上一层锡纸，刷上食用油，放上猪肉片，放入烤箱中",
+        "device": "烤箱",
+        "device_source": "烤箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "选择“鼓风烧烤”模式，以180℃烤10分钟至熟透。取出猪排，配上生菜叶丝一起食用即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 180.0,
+        "duration_min": 10.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、圣诞节、复活节、川湘菜、西餐风味、咸、香、脆、儿童、上班族"
+  },
+  {
+    "name": "蒸菜卷",
+    "ingredients": [
+      "主料：面粉350克",
+      "韭菜200克",
+      "鸡蛋80克",
+      "木耳10克",
+      "粉条20克",
+      "辅料：盐3克",
+      "花椒粉1克",
+      "白砂糖3克",
+      "开水（100℃）180克",
+      "食用油5克"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "食材准备",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "木耳、粉条用温水泡好净；韭菜洗净，控干水份",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "韭菜、粉条、木耳切碎，2个鸡蛋打碎，加少许凉水备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "方太C2.i燃气灶开5档中火，热锅凉油，待油热后，放入打散的鸡蛋搅拌成絮状",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "关火倒入切碎的韭菜、粉条、木耳、盐、糖、花椒粉，搅拌均匀出锅备用",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "面粉里加入开水，搅拌成絮状，揉成面团，醒10分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": 10.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "揉光面团， 擀成薄约1毫米厚度的面饼，把菜馅倒在面皮上，均匀摊开，四周边缘留下空",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "把面皮包裹着菜馅卷紧卷起来，两端收口",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 9,
+        "raw_text": "请取出水箱加满水，选择“开始烹饪”，按屏幕提示操作",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          8
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 10,
+        "raw_text": "尽情品尝吧",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          9
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "早餐、午餐、晚餐、下午茶、川湘菜、清淡、上班族、更年期、老人、健胃消食、减脂、便秘"
+  },
+  {
+    "name": "咸肉蒸蛋",
+    "ingredients": [
+      "A料：咸肉50克",
+      "鸡蛋3个",
+      "B料：小葱1根",
+      "芝麻油适量"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "将咸肉洗净去皮，切成厚约0.1cm的薄片，清水浸泡10分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": 10.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "将泡好的咸肉取出，挤干水分铺在盘底，将鸡蛋打在咸肉上",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "将盘子放在有孔蒸盘上，放入蒸箱中间层。开启电源，取出水箱加满水，选择“开始烹饪”按键，按屏幕提示操作",
+        "device": "蒸箱",
+        "device_source": "蒸箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "小葱洗净切葱花备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "烹饪结束后取出，撒上葱花，淋芝麻油即可食用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "早餐、午餐、晚餐、江浙菜、咸、上班族、老人"
+  },
+  {
+    "name": "水果奶昔",
+    "ingredients": [
+      "主料：红心火龙果250克",
+      "纯牛奶250克"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "主锅中加入红心火龙果块和纯牛奶，盖上锅盖和量杯，设置：1分钟/8档打浆。烹饪结束，取出立即饮用",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": 1.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      }
+    ],
+    "label": "早餐、下午茶、西餐风味、甜、儿童、上班族、健胃消食"
+  },
+  {
+    "name": "清蒸海蛎子",
+    "ingredients": [
+      "主料：新鲜牡蛎300克",
+      "葱6克",
+      "香菜6克",
+      "蒜8克",
+      "辅料：蚝油15毫升",
+      "醋10毫升",
+      "蒸鱼豉油3毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "食材准备",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "将牡蛎清洗干净",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "将葱洗净切葱花、香菜洗净切碎、蒜切末",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将牡蛎放入蒸盘",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "放入方太C2.i智能蒸箱，设置普通蒸模式，100度，蒸8分钟",
+        "device": "蒸箱",
+        "device_source": "蒸箱",
+        "mode": "普通蒸",
+        "temperature_c": 100.0,
+        "duration_min": 8.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "将葱花、香菜碎、蒜末、蚝油、醋、蒸鱼豉油、香油搅拌均匀作蘸料即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "清蒸",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "尽情品尝吧",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "晚餐、地方风味、清淡、上班族、减脂"
+  },
+  {
+    "name": "酸辣菠萝佐牛排",
+    "ingredients": [
+      "A料：鲜牛排150克（1片）",
+      "土豆100克",
+      "小黄瓜1根",
+      "菠萝半个",
+      "B料：菠萝醋10毫升",
+      "黄油15克",
+      "咖喱粉3克",
+      "盐2克",
+      "黑胡椒5克"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "将1厘米厚的牛排用盐、黑胡椒、部分菠萝醋抹匀，腌渍20分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": 20.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "将洗净的菠萝肉切丁，放入盐水中略泡一下",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "将洗净的土豆放入沸水中煮熟，去皮后捣成泥，备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将洗净的黄瓜切薄片，排成圆形摆盘",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "锅中倒入黄油加热至溶化，放入菠萝丁、余下的菠萝醋、咖喱粉",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "炒匀后盛出，放在黄瓜中间，黄瓜上再放上土豆泥",
+        "device": "人工",
+        "device_source": "",
+        "mode": "爆炒",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "将腌好的牛排放入铺有锡纸的烤盘，推入烤箱",
+        "device": "烤箱",
+        "device_source": "烤箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "选择“完全烧烤”模式，以200℃烤8分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 200.0,
+        "duration_min": 8.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、西餐风味、酸、辣、上班族、减脂"
+  },
+  {
+    "name": "石锅拌饭",
+    "ingredients": [
+      "A料：熟米饭300克",
+      "食用油2.5克",
+      "B料：鸡蛋1个",
+      "熟猪肉40克",
+      "辣白菜40克",
+      "胡萝卜40克",
+      "香菇40克",
+      "香干40克",
+      "C料：韩式辣酱30克",
+      "米醋5克",
+      "盐2.5克",
+      "生抽15克",
+      "黄瓜40克"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "将猪肉切细丝、香菇、黄瓜、香干、胡萝卜、辣白菜切丝备用；将韩式辣酱、米醋、盐、生抽和匀备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "将石锅四周刷一层食用油，放入熟米饭，沿石锅边像扇子样依次铺上熟肉丝、香菇丝、胡萝卜丝、辣白菜丝、香干丝、中间位置留个圆形打入鸡蛋、盖上保鲜膜并在表面扎几个小孔",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "将石锅拌饭放入蒸微一体机微波加热区",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、东北菜、上班族"
+  },
+  {
+    "name": "豉汁蒜香蒸排骨",
+    "ingredients": [
+      "主料：排骨260克",
+      "辅料：豆豉5克",
+      "蒜蓉3克",
+      "姜蓉3克",
+      "葱花5克",
+      "干淀粉6克",
+      "盐2克",
+      "鸡粉3克",
+      "白糖2克",
+      "蚝油5克",
+      "料酒8毫升",
+      "生抽8毫升",
+      "食用油10毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "用油起锅，撒上蒜蓉、姜蓉，爆香",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "倒入洗净的豆豉，炒匀，关火待用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "爆炒",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "把洗好的排骨段放在碗中，盛入锅中的食材",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "加入白糖、 盐、生抽、料酒、蚝油、鸡粉，拌匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "撒上干淀粉，拌匀，腌渍10分钟，待用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": 10.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "在电蒸箱的水箱中注水，装在电蒸箱内，将装有排骨的盘子放入蒸箱",
+        "device": "蒸箱",
+        "device_source": "电蒸箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "启动机器，选择“普通蒸”模式，100℃，蒸38分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "普通蒸",
+        "temperature_c": 100.0,
+        "duration_min": 38.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "取出，趁热撒上葱花即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "午餐、晚餐、川湘菜、西餐风味、咸、蒜香、豉香、上班族"
+  },
+  {
+    "name": "鲜虾芙蓉蛋",
+    "ingredients": [
+      "主料：鸡蛋2个",
+      "虾仁60克",
+      "辅料：葱花少许",
+      "盐2克",
+      "鸡粉2克",
+      "水淀粉5毫升",
+      "食用油10毫升"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "把洗净的虾仁由背部切开，去除沙线",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "虾仁盛入碗中，加少许盐、鸡粉、水淀粉，拌匀，再倒入少许食用油，腌渍10分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": 10.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "鸡蛋打入碗中，加少许盐、鸡粉，打散调匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "再加入100毫升温水，调成蛋液",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "倒入另一盘中",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "水箱注水，放入电蒸箱，再放入蒸盘",
+        "device": "蒸箱",
+        "device_source": "电蒸箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "选择“普通蒸”模式，以90℃蒸3分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "普通蒸",
+        "temperature_c": 90.0,
+        "duration_min": 3.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "揭开盖，放入虾仁",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 9,
+        "raw_text": "选择“普通蒸”模式，以90℃蒸3分钟即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "普通蒸",
+        "temperature_c": 90.0,
+        "duration_min": 3.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          8
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "晚餐、川湘菜、江浙菜、清淡、鲜美、上班族、儿童"
+  },
+  {
+    "name": "蒜香炒花甲",
+    "ingredients": [
+      "主料：水500g",
+      "花蛤300g",
+      "食用油10g",
+      "蒜末20g",
+      "蚝油20g",
+      "蒜蓉辣椒酱20g",
+      "葱花适量"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "主锅中加入水和花蛤，盖上锅盖和量杯，设置：7分钟/140℃/1档（反转）焯水。结束后，取出花蛤沥干水分备用，并洗净主锅",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "",
+        "temperature_c": 140.0,
+        "duration_min": 7.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "主锅中加入食用油、蒜末、蚝油和蒜蓉辣椒酱，盖上锅盖和量杯，设置：2分钟/140℃/1档（反转）爆香",
+        "device": "灶具",
+        "device_source": "主锅",
+        "mode": "",
+        "temperature_c": 140.0,
+        "duration_min": 2.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "加入花蛤，盖上锅盖，不要放量杯，设置：3分钟/140℃/1档（反转）煸炒。烹饪结束，撒上葱花，趁热享用",
+        "device": "灶具",
+        "device_source": "锅",
+        "mode": "煸炒",
+        "temperature_c": 140.0,
+        "duration_min": 3.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "晚餐、川湘菜、辣、咸、上班族、减脂"
+  },
+  {
+    "name": "红豆薏米粥",
+    "ingredients": [
+      "主料：红豆120g（（浸泡4小时））",
+      "薏米80g",
+      "水1200g",
+      "红糖75g"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "加入红糖，设置：2分钟/100℃/2档（反转）混合。烹饪结束，用刮刀将红豆薏米粥取出即可食用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 100.0,
+        "duration_min": 2.0,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [],
+        "notes": ""
+      }
+    ],
+    "label": "早餐、午餐、晚餐、粤菜、江浙菜、甜、儿童、哺乳、上班族、更年期、老人、养胃、健胃消食、减脂、助眠、贫血、便秘"
+  },
+  {
+    "name": "小龙虾套餐",
+    "ingredients": [
+      "A料：龙口粉丝75克",
+      "金针菇150克",
+      "蒜蓉酱100克",
+      "B料：毛豆300克",
+      "开水400克",
+      "盐4克",
+      "海鲜捞汁120克",
+      "纯净水60克",
+      "小米辣10克（（切碎））",
+      "主料：新鲜小龙虾2000克",
+      "黄瓜2根（（去芯切条））",
+      "青椒4个（（切片））",
+      "香辣小龙虾调料包200克",
+      "油焖小龙虾调料包100克",
+      "蒜香小龙虾调料包150克",
+      "啤酒400克"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "取1000g小龙虾放入大号双耳盘中，加入200g香辣小龙虾调料、1根黄瓜（去芯切条）和2个青椒（切片），再倒入200g啤酒混合均匀备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "取500g小龙虾放入中号碗中，加入100g油焖小龙虾调料、半根黄瓜（去芯切条）和1个青椒（切片），再倒入200g啤酒混合均匀备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "焖烧",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "取500g小龙虾放入中号碗中，加入150g蒜香小龙虾调料、半根黄瓜（去芯切条）和1个青椒（切片），混合均匀备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "将泡软的龙口粉丝和金针菇铺在小号碗中，均匀放入100g蒜蓉酱备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "将毛豆放入小号碗中，加入4g盐和400g开水混合均匀备用",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "将三盘小龙虾置于蒸烤盘上放入机器上层，粉丝金针菇和毛豆置于蒸烤架上放入下层",
+        "device": "蒸箱",
+        "device_source": "蒸烤",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "取出水箱加满水，在设备/APP端找到并进入“小龙虾套餐”，选择“开始烹饪”按键，按屏幕提示操作",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      }
+    ],
+    "label": ""
+  },
+  {
+    "name": "金色城堡",
+    "ingredients": [
+      "A料：鸡蛋4个",
+      "低筋面粉270克",
+      "糖粉160克",
+      "黄油150克",
+      "牛奶40毫升",
+      "B料：泡打粉8克",
+      "盐3克"
+    ],
+    "steps": [
+      {
+        "step_id": 1,
+        "raw_text": "取一玻璃碗，倒入鸡蛋、糖粉",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [],
+        "notes": ""
+      },
+      {
+        "step_id": 2,
+        "raw_text": "用电动搅拌器搅匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          1
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 3,
+        "raw_text": "加入黄油，搅匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          2
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 4,
+        "raw_text": "倒入盐、泡打粉、低筋面粉，搅拌匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          3
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 5,
+        "raw_text": "加入牛奶，加入葡萄干",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          4
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 6,
+        "raw_text": "一边倒一边搅匀",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          5
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 7,
+        "raw_text": "搅匀，制成葡萄干蛋糕浆",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          6
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 8,
+        "raw_text": "蛋糕浆装入裱花袋中，剪开一个小口",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          7
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 9,
+        "raw_text": "挤入中空蛋糕模具中，约八分满",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          8
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 10,
+        "raw_text": "放入预热的烤箱中",
+        "device": "烤箱",
+        "device_source": "烤箱",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "烹饪",
+        "depends_on": [
+          9
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 11,
+        "raw_text": "选择“分控烘焙”模式，以上火180℃下火165℃烤15分钟",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": 180.0,
+        "duration_min": 15.0,
+        "needs_human": false,
+        "unattended": true,
+        "prep_type": "烹饪",
+        "depends_on": [
+          10
+        ],
+        "notes": ""
+      },
+      {
+        "step_id": 12,
+        "raw_text": "打开箱门，取出即可",
+        "device": "人工",
+        "device_source": "",
+        "mode": "",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "unattended": false,
+        "prep_type": "切配",
+        "depends_on": [
+          11
+        ],
+        "notes": ""
+      }
+    ],
+    "label": "下午茶、西餐风味、甜、儿童、上班族"
+  }
+]

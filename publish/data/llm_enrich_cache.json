@@ -1,0 +1,274 @@
+{
+ "原味墨西哥面包": {
+  "2": {
+   "device": "烤箱",
+   "temperature": "35-40",
+   "duration_min": "60-120",
+   "mode": "发酵"
+  },
+  "3": {
+   "device": "烤箱",
+   "temperature": "35-40",
+   "duration_min": "40-90",
+   "mode": "发酵"
+  },
+  "7": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "烘焙"
+  }
+ },
+ "韩式泡菜鸦片鱼头": {
+  "1": {
+   "device": "灶具",
+   "temperature": 90,
+   "duration_min": 0.25,
+   "mode": "烫制"
+  },
+  "3": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 5,
+   "mode": "翻炒烹煮"
+  },
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  }
+ },
+ "巴斯克蛋糕": {
+  "1": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "小火"
+  },
+  "6": {
+   "device": "烤箱",
+   "temperature": 220,
+   "duration_min": 25,
+   "mode": "上下火"
+  },
+  "7": {
+   "device": "冰箱",
+   "temperature": 4,
+   "duration_min": 120,
+   "mode": "冷藏"
+  }
+ },
+ "芝士番茄土豆泥": {},
+ "玛格丽特": {
+  "1": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 15,
+   "mode": "煮"
+  },
+  "4": {
+   "device": "烤箱",
+   "temperature": 170,
+   "duration_min": 15,
+   "mode": "烘烤"
+  }
+ },
+ "柠檬干": {
+  "3": {
+   "device": "蒸箱",
+   "temperature": 60,
+   "duration_min": 120,
+   "mode": "烘干"
+  }
+ },
+ "松子枣泥拉糕": {},
+ "美式薯条": {
+  "2": {
+   "device": "烤箱",
+   "temperature": 200,
+   "duration_min": 20,
+   "mode": "热风烤"
+  }
+ },
+ "葱香土豆泥": {
+  "2": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": 180,
+   "duration_min": 5,
+   "mode": "炒"
+  }
+ },
+ "轻松一锅蒸": {
+  "11": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 20,
+   "mode": "普通蒸"
+  }
+ },
+ "披萨面团": {},
+ "珍珠爆浆蛋糕": {},
+ "红豆糯米糕": {
+  "1": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "隔水加热"
+  },
+  "4": {
+   "device": "烤箱",
+   "temperature": 150,
+   "duration_min": 20,
+   "mode": "烘焙"
+  }
+ },
+ "竹荪排骨汤": {},
+ "三味蒸鳗鱼&香茅烤鳗鱼同烹": {
+  "5": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "大火"
+  },
+  "12": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "热风烤"
+  }
+ },
+ "糖霜饼干": {
+  "4": {
+   "device": "冰箱",
+   "temperature": -18,
+   "duration_min": 30,
+   "mode": "冷冻"
+  },
+  "6": {
+   "device": "烤箱",
+   "temperature": 150,
+   "duration_min": 12,
+   "mode": "烘烤"
+  }
+ },
+ "麻辣对虾": {
+  "2": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "炒"
+  },
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 8,
+   "mode": "普通蒸"
+  }
+ },
+ "法式羊排": {
+  "1": {
+   "device": "烤箱",
+   "temperature": 200,
+   "duration_min": 20,
+   "mode": "热风烤"
+  }
+ },
+ "本帮白切鸡": {
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": "小火",
+   "duration_min": 30,
+   "mode": "煮"
+  },
+  "6": {
+   "device": "灶具",
+   "temperature": "中小火",
+   "duration_min": 10,
+   "mode": "煮"
+  }
+ },
+ "广式月饼（台式）": {},
+ "拿破仑酥": {
+  "1": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 10,
+   "mode": "普通加热"
+  },
+  "8": {
+   "device": "烤箱",
+   "temperature": 180,
+   "duration_min": 20,
+   "mode": "烘焙"
+  }
+ },
+ "抹茶红豆白玉卷": {},
+ "血糯米仙草奶茶": {
+  "2": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 10,
+   "mode": "小火煮"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": "",
+   "duration_min": 5,
+   "mode": "小火加热搅拌"
+  },
+  "8": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 30,
+   "mode": "普通蒸"
+  }
+ },
+ "黑森林蛋糕": {},
+ "紫甘蓝沙拉": {
+  "4": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 15,
+   "mode": "普通蒸"
+  }
+ },
+ "糯米烧麦": {
+  "2": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 40,
+   "mode": "普通蒸"
+  },
+  "3": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 15,
+   "mode": "水煮"
+  },
+  "5": {
+   "device": "灶具",
+   "temperature": "中火",
+   "duration_min": 10,
+   "mode": "翻炒"
+  },
+  "10": {
+   "device": "蒸箱",
+   "temperature": 100,
+   "duration_min": 10,
+   "mode": "普通蒸"
+  }
+ }
+}

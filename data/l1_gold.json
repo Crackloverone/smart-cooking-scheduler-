@@ -1,0 +1,1242 @@
+{
+  "口径": {
+    "用途": "L1 结构化解析的**对照标注集**。scripts/l1_audit.py 拿它算逐项准确率，把「自证覆盖率」变成「对照标注的准确率」。",
+    "标注依据": "只依据 data/recipes_official_100.csv 的**原文**（不是解析器的输出），否则就是循环论证。",
+    "字段": {
+      "device": "该步的**执行主体**：人工 / 灶具 / 蒸箱 / 烤箱 / 冰箱。装盘、入机、按键等非加热动作记为「人工」。",
+      "temperature_c": "原文**显式写出**的温度（℃）。原文没写就是 null —— 不许拿常识补。",
+      "duration_min": "原文**显式写出**的时长（分钟）。原文没写就是 null。",
+      "needs_human": "该步是否需要人**持续**操作/值守（即占住双手）。蒸箱/烤箱/冰箱这类**机器自动运行**的步 = false —— 放进去、按下开始之后人是空的，排程上表现为不占用「人工」资源（这正是赛题「炖煮无人值守时可切另一道菜的食材」的前提）。切配/装盘/翻炒/按键装载 = true。",
+      "serial": "该步是否必须在**同菜内前一步完成之后**才能开始。原文明确写了「同时/趁…时」的并行步记 false。"
+    },
+    "准确率口径": "温度/时长的准确率**只在 gold 非 null 的步上统计** —— 原文没写的值本来就无从判对错，把它算进分母会得出一个假的低分（旧版 l1_report 的 13.7% 就是这么来的）。",
+    "为什么值得": "赛题 L1 的 20 分里，「时间提取准确率」是与标注答案逐条比对的。没有 gold set 就只能自证，自证在评委眼里等于没有。"
+  },
+  "覆盖说明": "20 道菜 / 150 步，四类设备均覆盖：蒸箱 6 道、烤箱 8 道、灶具 8 道、冰箱 5 道（含交叉）。",
+  "dishes": {
+    "清蒸鲈鱼": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 10,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "蒜蓉粉丝蒸扇贝": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 10,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "豉汁蒸草鱼": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 10,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "蒸箱",
+        "temperature_c": 100,
+        "duration_min": 8,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "粉蒸藕丁": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "麻辣对虾": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 10,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "竹荪排骨汤": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": false
+      },
+      {
+        "step_id": 4,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 8,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 9,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 10,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "香烤排骨": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 30,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "冰箱",
+        "temperature_c": null,
+        "duration_min": 120,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "蒜香烤茄子": [
+      {
+        "step_id": 1,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": false
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "香菇烤芦笋": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "烤箱",
+        "temperature_c": 190,
+        "duration_min": 8,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": false
+      },
+      {
+        "step_id": 6,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "香烤鲫鱼": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 10,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "烤箱",
+        "temperature_c": 200,
+        "duration_min": 20,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "巴斯克蛋糕": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "冰箱",
+        "temperature_c": null,
+        "duration_min": 120,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "嫩烤鸡胸肉": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": 60,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "芝士番茄土豆泥": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": 20,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 8,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 9,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 10,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 11,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 12,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 13,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "苹果芒果派": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "冰箱",
+        "temperature_c": null,
+        "duration_min": 60,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": false
+      },
+      {
+        "step_id": 8,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": false
+      },
+      {
+        "step_id": 9,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 10,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 11,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 12,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 13,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 14,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "雪媚娘": [
+      {
+        "step_id": 1,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "冰箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": false
+      },
+      {
+        "step_id": 6,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 8,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "豆沙手撕包": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 8,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 9,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 10,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 11,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 12,
+        "device": "烤箱",
+        "temperature_c": 35,
+        "duration_min": 30,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 13,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 14,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 15,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 16,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 17,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 18,
+        "device": "烤箱",
+        "temperature_c": 35,
+        "duration_min": 20,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 19,
+        "device": "烤箱",
+        "temperature_c": 180,
+        "duration_min": 12,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 20,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      }
+    ],
+    "广式叉烧": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "冰箱",
+        "temperature_c": null,
+        "duration_min": 1440,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "土豆焖饭": [
+      {
+        "step_id": 1,
+        "device": "蒸箱",
+        "temperature_c": 100,
+        "duration_min": 20,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "灶具",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "蒸箱",
+        "temperature_c": 100,
+        "duration_min": 25,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "油醋汁剁肉饼蒸和乐蟹": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 6,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      },
+      {
+        "step_id": 7,
+        "device": "蒸箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ],
+    "椰香苹果香蕉烤燕麦": [
+      {
+        "step_id": 1,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 2,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 3,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 4,
+        "device": "人工",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": true,
+        "serial": true
+      },
+      {
+        "step_id": 5,
+        "device": "烤箱",
+        "temperature_c": null,
+        "duration_min": null,
+        "needs_human": false,
+        "serial": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "remote": {
+    "base_url": "https://potatoya.cn/pro100x/v1",
+    "api_key": "sk-pro100x-cmfp694l0VD44SGic3NVW61FjlGc837EMAPI7vnESb0"
+  },
+  "models": {
+    "ollama": "qwen2.5:7b",
+    "openai": "gpt-5.6-sol"
+  },
+  "provider": "openai",
+  "model": "gpt-5.6-sol"
+}

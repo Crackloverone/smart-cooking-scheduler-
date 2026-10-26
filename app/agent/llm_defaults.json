@@ -1,0 +1,21 @@
+{
+  "_note": [
+    "出厂默认配置 —— **随源码 / 发布包一起分发**，让接收方打开就能用，不必自己配。",
+    "优先级：真实环境变量 > data/llm_settings.json（用户层，设置页保存的那个）> 本文件 > 代码里的 _DEFAULTS。",
+    "用户层一旦存在就整层压过本文件 ⇒ 接收方在设置页改过之后，重新发一版程序也不会把它改的东西抹掉。",
+    "⚠ 本文件是**唯一**允许出现第三方中转站域名的文件（护栏：tests/test_llm_provider.py::test_third_party_relay_appears_only_in_the_factory_file）。",
+    "⚠ 这里放的是真凭据。轮换密钥 = 改这一处 + 重新打包；要临时换掉而不重新打包，用环境变量 FT_LLM_API_KEY（它优先级最高）。",
+    "不想让接收方用到这把钥匙：把 provider 改回 \"ollama\"，或删掉 remote 块（会自动回落到代码里的默认档）。",
+    "改坏 / 删掉本文件都不会让服务起不来 —— 解析失败只留一条 warning，然后按代码默认档跑。"
+  ],
+  "provider": "openai",
+  "remote": {
+    "base_url": "https://potatoya.cn/pro100x/v1",
+    "api_key": "sk-pro100x-cmfp694l0VD44SGic3NVW61FjlGc837EMAPI7vnESb0"
+  },
+  "models": {
+    "ollama": "qwen2.5:7b",
+    "openai": "gpt-5.6-sol"
+  },
+  "model": "gpt-5.6-sol"
+}

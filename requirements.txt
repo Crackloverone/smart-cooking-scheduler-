@@ -1,0 +1,24 @@
+# requirements.txt —— **开发用**的宽松区间约束
+#
+# 评审机 / 复现机请改用精确快照:
+#     pip install -r requirements.lock.txt
+# 那里锁死了全部传递依赖(含 ortools/starlette 这类小版本会改行为的包),
+# 能逐字复刻开发环境。本文件保留区间约束, 是为了让开发机能方便地吃安全更新。
+#
+# 两边的直接依赖必须保持同步 —— tests/test_dependency_lock.py 会检查这一点。
+
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.0
+ortools>=9.10
+pytest>=8.0
+
+# 说明 1: 仓库内没有任何代码 import httpx (接口测试走的是"直接调用路由函数",
+# 见 scripts/api_probe.py, 不需要 TestClient)。原来这里声明了 httpx 却从未使用,
+# 会让 `pip install -r requirements.txt` 多装一个用不上的包。
+# 若你需要用 fastapi.testclient.TestClient 写 HTTP 级测试, 再单独 `pip install httpx`。
+#
+# 说明 2: 上面 5 行看起来很少, 但实际会装 33 个包 —— ortools 会带进
+# pandas/numpy/protobuf/absl-py, uvicorn[standard] 会带进 httptools/watchfiles/
+# websockets/python-dotenv/PyYAML。这是正常的, 不是依赖污染, 详见 lock 文件里的
+# 依赖链注释。

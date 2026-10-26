@@ -1,0 +1,64 @@
+# requirements.lock.txt —— 评审机/复现机用的**精确**依赖快照
+#
+# 用途: `pip install -r requirements.lock.txt` 可以逐字复刻开发机上的依赖树,
+#       避免 "在我机器上是好的" —— requirements.txt 里全是 `>=`, 上游一发新版
+#       就可能出现行为漂移(尤其 ortools 与 starlette, 小版本改动会影响求解器
+#       默认参数与中间件行为)。
+#
+# 生成方式: `.venv/Scripts/python.exe -m pip freeze`
+# 生成环境: Windows 10/11 x64 · CPython 3.14.7 · pip 26.2.1
+#
+# 这份列表**没有手工增删**, 即 pip freeze 的完整闭包。已核对每个包都确实来自
+# requirements.txt 的直接依赖或其传递依赖, 无杂包:
+#   - ortools  → absl-py, immutabledict, numpy, pandas, protobuf, typing-extensions
+#                (pandas → numpy, python-dateutil, tzdata; python-dateutil → six)
+#   - fastapi  → annotated-doc, pydantic, starlette, typing-extensions, typing-inspection
+#                (pydantic → pydantic_core, annotated-types, typing-extensions, typing-inspection)
+#   - uvicorn[standard] → click, h11, httptools, python-dotenv, PyYAML, watchfiles, websockets
+#                (click → colorama[win])
+#   - pytest   → iniconfig, packaging, pluggy, Pygments, colorama[win]
+#   - anyio / idna 由 starlette 与 httptools 链路引入
+#
+# 平台差异(不影响功能, 只影响本文件能否逐字套用):
+#   - Windows: 就是下面这份, 直接可用。uvloop 在 Windows 上装不上, 故不在列。
+#   - Linux/macOS: `uvicorn[standard]` 还会装 uvloop(约 0.21.x)。想要逐字一致请
+#     额外 `pip install uvloop`; 不装也不影响正确性(uvicorn 会自动回退 asyncio 循环)。
+#   - colorama 是 Windows 专用; Linux 上装它无害但会被跳过。
+#
+# 更新时机: 只有当 requirements.txt 真的改了直接依赖, 或需要主动升级时, 才重新
+#   生成本文件。生成后请跑 `python -m pytest tests/test_dependency_lock.py -q`
+#   确认锁文件与当前环境一致。
+
+absl-py==2.5.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+click==8.5.0
+colorama==0.4.6
+fastapi==0.141.1
+h11==0.16.0
+httptools==0.8.0
+idna==3.20
+immutabledict==4.3.1
+iniconfig==2.3.0
+numpy==2.5.3
+ortools==9.15.6755
+packaging==26.3
+pandas==3.0.6
+pluggy==1.6.0
+protobuf==6.33.6
+pydantic==2.13.5
+pydantic_core==2.46.5
+Pygments==2.21.0
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.3
+PyYAML==6.0.3
+six==1.17.0
+starlette==1.7.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzdata==2026.4
+uvicorn==0.53.0
+watchfiles==1.3.0
+websockets==17.1

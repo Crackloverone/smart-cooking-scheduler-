@@ -1,0 +1,905 @@
+{
+  "目标": "http://127.0.0.1:8137/app",
+  "内核": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "生成时间": "2026-10-08 12:46:38",
+  "窗口": "1440x900",
+  "通过": 120,
+  "失败": 0,
+  "未捕获异常": [],
+  "console错误": [],
+  "资源加载失败": [],
+  "布局明细": {
+    "home": {
+      "overflow": {
+        "scrollW": 1440,
+        "clientW": 1440,
+        "delta": 0
+      },
+      "collapsed": [],
+      "offRight": [],
+      "clipped": [],
+      "ellipsized": 0,
+      "overlaps": [],
+      "squashed": [],
+      "visibleInteractive": 7,
+      "topGap": 0
+    },
+    "plan": {
+      "overflow": {
+        "scrollW": 1440,
+        "clientW": 1440,
+        "delta": 0
+      },
+      "collapsed": [],
+      "offRight": [],
+      "clipped": [],
+      "ellipsized": 0,
+      "overlaps": [],
+      "squashed": [],
+      "visibleInteractive": 107,
+      "topGap": 14
+    },
+    "recipes": {
+      "overflow": {
+        "scrollW": 1440,
+        "clientW": 1440,
+        "delta": 0
+      },
+      "collapsed": [],
+      "offRight": [],
+      "clipped": [],
+      "ellipsized": 0,
+      "overlaps": [],
+      "squashed": [],
+      "visibleInteractive": 108,
+      "topGap": 14
+    },
+    "settings": {
+      "overflow": {
+        "scrollW": 1440,
+        "clientW": 1440,
+        "delta": 0
+      },
+      "collapsed": [],
+      "offRight": [],
+      "clipped": [],
+      "ellipsized": 0,
+      "overlaps": [],
+      "squashed": [],
+      "visibleInteractive": 17,
+      "topGap": 14
+    },
+    "history": {
+      "overflow": {
+        "scrollW": 1440,
+        "clientW": 1440,
+        "delta": 0
+      },
+      "collapsed": [],
+      "offRight": [],
+      "clipped": [],
+      "ellipsized": 0,
+      "overlaps": [],
+      "squashed": [],
+      "visibleInteractive": 13,
+      "topGap": 14
+    }
+  },
+  "甘特条": {
+    "total": 15,
+    "zero": 0,
+    "outside": 0,
+    "minW": 24,
+    "maxRight": 0,
+    "offenders": []
+  },
+  "视口适配": {
+    "三道菜": {
+      "innerH": 900,
+      "viewW": 1440,
+      "docH": 900,
+      "docW": 1440,
+      "chrome": 65,
+      "chromeVar": "65px",
+      "navH": 51,
+      "vpTop": 65,
+      "vpH": 835,
+      "vpScrollH": 835,
+      "vpClientH": 835,
+      "ganttW": 826,
+      "ganttH": 232,
+      "ganttScrollW": 1200,
+      "ganttScrollH": 232,
+      "ganttOx": "auto",
+      "innerW": 1200,
+      "innerMinW": "max(100%, 1200px)",
+      "tasksH": 104,
+      "midH": 743,
+      "midGapPx": 0,
+      "colH": [
+        743,
+        743
+      ],
+      "colTracks": 3,
+      "colTracksByLayout": 3,
+      "laneCount": 3,
+      "planFirstTop": 79,
+      "gridAlign": "stretch",
+      "canvasMinW": 1200,
+      "maxT": 46,
+      "taskCols": [
+        52,
+        52,
+        88,
+        96,
+        482,
+        56
+      ],
+      "fab": {
+        "w": 60,
+        "hits": []
+      },
+      "vpPadBottom": 78,
+      "blocks": [
+        {
+          "k": "div.plan-head",
+          "h": 28
+        },
+        {
+          "k": "div#stats.stats",
+          "h": 71
+        },
+        {
+          "k": "div#legend.legend",
+          "h": 17
+        },
+        {
+          "k": "div.playbar",
+          "h": 32
+        },
+        {
+          "k": "div#ganttWrap.gantt-wrap",
+          "h": 349
+        },
+        {
+          "k": "h3.tasks-head",
+          "h": 25
+        },
+        {
+          "k": "div#planTools.tool-row",
+          "h": 26
+        },
+        {
+          "k": "div#hints",
+          "h": 0
+        },
+        {
+          "k": "div#tasks",
+          "h": 104
+        }
+      ],
+      "cardFill": {
+        "content": 709,
+        "used": 710,
+        "slack": -1
+      }
+    },
+    "五道菜": {
+      "innerH": 900,
+      "viewW": 1440,
+      "docH": 900,
+      "docW": 1440,
+      "chrome": 65,
+      "chromeVar": "65px",
+      "navH": 51,
+      "vpTop": 65,
+      "vpH": 835,
+      "vpScrollH": 835,
+      "vpClientH": 835,
+      "ganttW": 826,
+      "ganttH": 232,
+      "ganttScrollW": 1200,
+      "ganttScrollH": 266,
+      "ganttOx": "auto",
+      "innerW": 1200,
+      "innerMinW": "max(100%, 1200px)",
+      "tasksH": 104,
+      "midH": 743,
+      "midGapPx": 0,
+      "colH": [
+        743,
+        743
+      ],
+      "colTracks": 3,
+      "colTracksByLayout": 3,
+      "laneCount": 4,
+      "planFirstTop": 79,
+      "gridAlign": "stretch",
+      "canvasMinW": 1200,
+      "maxT": 46,
+      "taskCols": [
+        52,
+        52,
+        88,
+        96,
+        482,
+        56
+      ],
+      "fab": {
+        "w": 60,
+        "hits": []
+      },
+      "vpPadBottom": 78,
+      "blocks": [
+        {
+          "k": "div.plan-head",
+          "h": 28
+        },
+        {
+          "k": "div#stats.stats",
+          "h": 71
+        },
+        {
+          "k": "div#legend.legend",
+          "h": 17
+        },
+        {
+          "k": "div.playbar",
+          "h": 32
+        },
+        {
+          "k": "div#ganttWrap.gantt-wrap",
+          "h": 349
+        },
+        {
+          "k": "h3.tasks-head",
+          "h": 25
+        },
+        {
+          "k": "div#planTools.tool-row",
+          "h": 26
+        },
+        {
+          "k": "div#hints",
+          "h": 0
+        },
+        {
+          "k": "div#tasks",
+          "h": 104
+        }
+      ],
+      "cardFill": {
+        "content": 709,
+        "used": 710,
+        "slack": -1
+      }
+    }
+  },
+  "多视口扫描": [
+    {
+      "w": 320,
+      "h": 568,
+      "tag": "iPhone SE 1 / 最窄主流",
+      "innerW": 320,
+      "innerH": 568,
+      "scrollW": 320,
+      "scrollH": 4003,
+      "navL": 0,
+      "navR": 320,
+      "navH": 101,
+      "navBottom": 107,
+      "planFirstTop": 119,
+      "topGap": 12,
+      "chromeVar": 107,
+      "chromeExpect": 107,
+      "tracks": 1,
+      "touch": true,
+      "fabHits": [
+        "item sel:鸡翅包饭\n     ",
+        "item sel:苹果芒果派\n    "
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 360,
+      "h": 640,
+      "tag": "安卓主流 / 折叠外屏",
+      "innerW": 360,
+      "innerH": 640,
+      "scrollW": 360,
+      "scrollH": 3863,
+      "navL": 0,
+      "navR": 360,
+      "navH": 101,
+      "navBottom": 107,
+      "planFirstTop": 119,
+      "topGap": 12,
+      "chromeVar": 107,
+      "chromeExpect": 107,
+      "tracks": 1,
+      "touch": true,
+      "fabHits": [
+        "item :酿苦瓜\n      ",
+        "item :低温牛排\n     "
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "tag": "iPhone 12/13/14",
+      "innerW": 390,
+      "innerH": 844,
+      "scrollW": 390,
+      "scrollH": 3968,
+      "navL": 0,
+      "navR": 390,
+      "navH": 106,
+      "navBottom": 114,
+      "planFirstTop": 130,
+      "topGap": 16,
+      "chromeVar": 114,
+      "chromeExpect": 114,
+      "tracks": 1,
+      "touch": true,
+      "fabHits": [
+        "item :椰香苹果香蕉烤燕麦\n",
+        "item :双椒鳙鱼头\n    "
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 414,
+      "h": 896,
+      "tag": "iPhone XR / Plus",
+      "innerW": 414,
+      "innerH": 896,
+      "scrollW": 414,
+      "scrollH": 3908,
+      "navL": 0,
+      "navR": 414,
+      "navH": 106,
+      "navBottom": 114,
+      "planFirstTop": 130,
+      "topGap": 16,
+      "chromeVar": 114,
+      "chromeExpect": 114,
+      "tracks": 1,
+      "touch": true,
+      "fabHits": [
+        "item :双椒鳙鱼头\n    ",
+        "item :家常鲈鱼\n     "
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "tag": "iPad 竖屏",
+      "innerW": 768,
+      "innerH": 1024,
+      "scrollW": 768,
+      "scrollH": 3641,
+      "navL": 0,
+      "navR": 768,
+      "navH": 70,
+      "navBottom": 84,
+      "planFirstTop": 98,
+      "topGap": 14,
+      "chromeVar": 84,
+      "chromeExpect": 84,
+      "tracks": 1,
+      "touch": true,
+      "fabHits": [
+        "item :香烤排骨\n     ",
+        "item :栗子冰皮月饼\n   ",
+        "item :麻辣对虾\n     "
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "tag": "iPad 横屏",
+      "innerW": 1024,
+      "innerH": 768,
+      "scrollW": 1024,
+      "scrollH": 3511,
+      "navL": 0,
+      "navR": 1024,
+      "navH": 56,
+      "navBottom": 70,
+      "planFirstTop": 84,
+      "topGap": 14,
+      "chromeVar": 70,
+      "chromeExpect": 70,
+      "tracks": 1,
+      "touch": true,
+      "fabHits": [
+        "item :双椒鳙鱼头\n    ",
+        "item :家常鲈鱼\n     "
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 844,
+      "h": 390,
+      "tag": "iPhone 横屏",
+      "innerW": 844,
+      "innerH": 390,
+      "scrollW": 844,
+      "scrollH": 854,
+      "navL": 0,
+      "navR": 844,
+      "navH": 54,
+      "navBottom": 58,
+      "planFirstTop": 66,
+      "topGap": 8,
+      "chromeVar": 58,
+      "chromeExpect": 58,
+      "tracks": 3,
+      "touch": true,
+      "fabHits": [
+        "#eventResetBtn:恢复默认"
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 667,
+      "h": 375,
+      "tag": "iPhone 8 横屏",
+      "innerW": 667,
+      "innerH": 375,
+      "scrollW": 667,
+      "scrollH": 986,
+      "navL": 0,
+      "navR": 667,
+      "navH": 54,
+      "navBottom": 58,
+      "planFirstTop": 66,
+      "topGap": 8,
+      "chromeVar": 58,
+      "chromeExpect": 58,
+      "tracks": 3,
+      "touch": true,
+      "fabHits": [
+        "#eventResetBtn:恢复默认"
+      ],
+      "dash": false,
+      "short": [],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 1084,
+      "h": 570,
+      "tag": "窄桌面矮视口（回归现场）",
+      "innerW": 1084,
+      "innerH": 570,
+      "scrollW": 1084,
+      "scrollH": 1250,
+      "navL": 0,
+      "navR": 1084,
+      "navH": 51,
+      "navBottom": 65,
+      "planFirstTop": 79,
+      "topGap": 14,
+      "chromeVar": 65,
+      "chromeExpect": 65,
+      "tracks": 3,
+      "touch": false,
+      "fabHits": [
+        "#insertPick:随机挑一道没选的菜酿",
+        "#eventResetBtn:恢复默认"
+      ],
+      "dash": false,
+      "short": [
+        {
+          "what": "",
+          "h": 39,
+          "text": "主页"
+        },
+        {
+          "what": ".on",
+          "h": 39,
+          "text": "智能排程"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "菜谱库"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "设置"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "记录"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "AI排"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "清除"
+        },
+        {
+          "what": ".chip.on",
+          "h": 30,
+          "text": "全部 100"
+        }
+      ],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 1280,
+      "h": 720,
+      "tag": "常见笔记本 720p",
+      "innerW": 1280,
+      "innerH": 720,
+      "scrollW": 1280,
+      "scrollH": 1124,
+      "navL": 0,
+      "navR": 1280,
+      "navH": 51,
+      "navBottom": 65,
+      "planFirstTop": 79,
+      "topGap": 14,
+      "chromeVar": 65,
+      "chromeExpect": 65,
+      "tracks": 3,
+      "touch": false,
+      "fabHits": [
+        "#eventResetBtn:恢复默认"
+      ],
+      "dash": false,
+      "short": [
+        {
+          "what": "",
+          "h": 39,
+          "text": "主页"
+        },
+        {
+          "what": ".on",
+          "h": 39,
+          "text": "智能排程"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "菜谱库"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "设置"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "记录"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "AI排"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "清除"
+        },
+        {
+          "what": ".chip.on",
+          "h": 30,
+          "text": "全部 100"
+        }
+      ],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "tag": "最常见笔记本",
+      "innerW": 1366,
+      "innerH": 768,
+      "scrollW": 1366,
+      "scrollH": 768,
+      "navL": 0,
+      "navR": 1366,
+      "navH": 51,
+      "navBottom": 65,
+      "planFirstTop": 79,
+      "topGap": 14,
+      "chromeVar": 65,
+      "chromeExpect": 65,
+      "tracks": 3,
+      "touch": false,
+      "fabHits": [],
+      "dash": true,
+      "short": [
+        {
+          "what": "",
+          "h": 39,
+          "text": "主页"
+        },
+        {
+          "what": ".on",
+          "h": 39,
+          "text": "智能排程"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "菜谱库"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "设置"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "记录"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "AI排"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "清除"
+        },
+        {
+          "what": ".chip.on",
+          "h": 30,
+          "text": "全部 100"
+        }
+      ],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "tag": "桌面基准",
+      "innerW": 1440,
+      "innerH": 900,
+      "scrollW": 1440,
+      "scrollH": 900,
+      "navL": 0,
+      "navR": 1440,
+      "navH": 51,
+      "navBottom": 65,
+      "planFirstTop": 79,
+      "topGap": 14,
+      "chromeVar": 65,
+      "chromeExpect": 65,
+      "tracks": 3,
+      "touch": false,
+      "fabHits": [],
+      "dash": true,
+      "short": [
+        {
+          "what": "",
+          "h": 39,
+          "text": "主页"
+        },
+        {
+          "what": ".on",
+          "h": 39,
+          "text": "智能排程"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "菜谱库"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "设置"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "记录"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "AI排"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "清除"
+        },
+        {
+          "what": ".chip.on",
+          "h": 30,
+          "text": "全部 100"
+        }
+      ],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "tag": "全高清",
+      "innerW": 1920,
+      "innerH": 1080,
+      "scrollW": 1920,
+      "scrollH": 1080,
+      "navL": 0,
+      "navR": 1920,
+      "navH": 51,
+      "navBottom": 65,
+      "planFirstTop": 79,
+      "topGap": 14,
+      "chromeVar": 65,
+      "chromeExpect": 65,
+      "tracks": 3,
+      "touch": false,
+      "fabHits": [],
+      "dash": true,
+      "short": [
+        {
+          "what": "",
+          "h": 39,
+          "text": "主页"
+        },
+        {
+          "what": ".on",
+          "h": 39,
+          "text": "智能排程"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "菜谱库"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "设置"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "记录"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "AI排"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "清除"
+        },
+        {
+          "what": ".chip.on",
+          "h": 30,
+          "text": "全部 100"
+        }
+      ],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    },
+    {
+      "w": 2560,
+      "h": 1440,
+      "tag": "2K / 超宽",
+      "innerW": 2560,
+      "innerH": 1440,
+      "scrollW": 2560,
+      "scrollH": 1440,
+      "navL": 0,
+      "navR": 2560,
+      "navH": 51,
+      "navBottom": 65,
+      "planFirstTop": 79,
+      "topGap": 14,
+      "chromeVar": 65,
+      "chromeExpect": 65,
+      "tracks": 3,
+      "touch": false,
+      "fabHits": [],
+      "dash": true,
+      "short": [
+        {
+          "what": "",
+          "h": 39,
+          "text": "主页"
+        },
+        {
+          "what": ".on",
+          "h": 39,
+          "text": "智能排程"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "菜谱库"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "设置"
+        },
+        {
+          "what": "",
+          "h": 39,
+          "text": "记录"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "AI排"
+        },
+        {
+          "what": ".ghost.glass-btn",
+          "h": 37,
+          "text": "清除"
+        },
+        {
+          "what": ".chip.on",
+          "h": 30,
+          "text": "全部 100"
+        }
+      ],
+      "collapsed": [],
+      "offRight": [],
+      "overlaps": []
+    }
+  ],
+  "失败明细": []
+}

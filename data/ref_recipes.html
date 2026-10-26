@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>菜谱库 · 方太膳食规划 Agent</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/lumen.css">
+</head>
+<body data-panel="recipes">
+
+<div class="deco-blob blob-1"></div>
+<div class="deco-blob blob-2"></div>
+
+<!-- 顶部导航（embed 模式下隐藏：页面作为面板被嵌入时由主壳统一提供导航） -->
+
+<nav class="navbar">
+  <div class="mx-auto w-full px-6 lg:px-10 2xl:px-16 min-[2560px]:px-24 h-16 flex items-center justify-between gap-6 relative z-10">
+    <a href="/" class="flex items-center gap-3 no-underline">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: var(--fg); transition: background 0.5s;">
+        <div class="w-3.5 h-3.5 rounded-sm" style="background: var(--accent-2); transition: background 0.5s;"></div>
+      </div>
+      <div>
+        <div class="font-display font-bold text-lg leading-none" style="color: var(--fg);">方太<span class="font-italic font-medium" style="color: var(--accent-2);">.</span>膳食</div>
+        <div class="text-[10px] font-mono uppercase tracking-widest" style="color: var(--muted);">个性化膳食规划 Agent</div>
+      </div>
+    </a>
+
+    <div class="hidden md:flex items-center gap-1">
+      <a href="/" data-panel="chat" class="btn btn-ghost btn-sm ">对话规划</a>
+      <a href="/recipes" data-panel="recipes" class="btn btn-ghost btn-sm btn-primary">菜谱库</a>
+      <a href="/profiles" data-panel="profiles" class="btn btn-ghost btn-sm ">健康档案</a>
+      <a href="/knowledge" data-panel="knowledge" class="btn btn-ghost btn-sm ">知识库</a>
+      <a href="/records" data-panel="records" class="btn btn-ghost btn-sm ">问答工单</a>
+      <a href="/settings" data-panel="settings" class="btn btn-ghost btn-sm ">模型配置</a>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button class="btn btn-ghost btn-icon theme-toggle" id="themeToggle" aria-label="切换主题">
+        <i data-lucide="moon" class="icon-moon"></i>
+        <i data-lucide="sun" class="icon-sun"></i>
+      </button>
+      <a href="/settings" data-panel="settings" class="btn btn-ghost btn-icon" aria-label="模型配置" title="模型配置">
+        <i data-lucide="settings"></i>
+      </a>
+      <a href="/api/sessions" target="_blank" class="btn btn-ghost btn-icon" aria-label="API">
+        <i data-lucide="code-2"></i>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+<div class="relative z-10" id="shellContent">
+  
+<div class="mx-auto w-full px-6 lg:px-10 2xl:px-16 min-[2560px]:px-24 pt-8 pb-20">
+  <div class="section-title mb-6">
+    <span class="section-num">01</span>
+    <h2 class="section-heading">菜谱 <em>知识库</em></h2>
+  </div>
+  <p class="section-desc">基于方太健康膳食知识库的菜谱数据，每道菜包含食材清单、营养数据、烹饪方式与适配人群。</p>
+
+  <!-- 筛选栏 -->
+  <div class="card mb-6">
+    <div class="grid md:grid-cols-4 gap-3">
+      <div class="input-wrap">
+        <span class="input-icon"><i data-lucide="search"></i></span>
+        <input id="searchKeyword" type="text" class="input input-with-icon" placeholder="搜索菜名或食材..." oninput="loadRecipes()">
+      </div>
+      <select id="filterCategory" class="input" onchange="loadRecipes()">
+        <option value="">全部类别</option>
+      </select>
+      <select id="filterCuisine" class="input" onchange="loadRecipes()">
+        <option value="">全部菜系</option>
+      </select>
+      <select id="filterMethod" class="input" onchange="loadRecipes()">
+        <option value="">全部烹饪方式</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between mb-4">
+    <div class="text-sm" style="color: var(--muted);">
+      共 <span id="recipeCount" class="font-mono font-bold" style="color: var(--accent);">0</span> 道菜
+      <span id="loadedCount" class="ml-2"></span>
+    </div>
+    <div id="pageInfo" class="text-xs" style="color: var(--muted);"></div>
+  </div>
+
+  <!-- 菜谱网格 -->
+  <div id="recipeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-[2560px]:grid-cols-6 gap-4">
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+    <div class="skeleton h-64"></div>
+  </div>
+
+  <!-- 加载更多 -->
+  <div id="loadMoreWrap" class="hidden text-center mt-8">
+    <button id="loadMoreBtn" class="btn btn-primary" onclick="loadMore()">
+      <i data-lucide="chevron-down"></i>加载更多
+    </button>
+    <div id="loadMoreInfo" class="text-xs mt-2" style="color: var(--muted);"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- 面板宿主：点击导航时懒加载其它页面（iframe 隐藏保留状态，不重载） -->
+<div id="panelHost" class="relative z-10 hidden"></div>
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/static/js/lumen.js"></script>
+
+<script>
+const PAGE_SIZE = 60;
+let currentOffset = 0;
+let totalAll = 0;
+let currentQuery = {};
+
+function buildRecipeCard(r) {
+  const n = r.nutrition || {};
+  const suitable = r.suitable_for || [];
+  const avoid = r.avoid_for || [];
+  return `
+  <div class="dish-card">
+    ${r.image ? `<img src="${r.image}" alt="${r.name}" loading="lazy" onerror="this.style.display='none'">` : ''}
+    <div class="dish-body">
+      <div class="font-display font-bold text-base mb-1">${r.name}</div>
+      <div class="flex flex-wrap gap-1 mb-2">
+        <span class="badge badge-accent">${r.category}</span>
+        <span class="badge badge-neutral">${r.cooking_method}</span>
+        <span class="badge badge-outline">${r.cuisine}</span>
+      </div>
+      <div class="text-xs mb-2" style="color: var(--fg-dim);">${(r.ingredients || []).map((i) => typeof i === 'object' ? i.name : i).slice(0, 4).join('、')}</div>
+      <div class="dish-nutrition">
+        <span>${n.kcal || 0}kcal</span>
+        <span>蛋白${n.protein || 0}g</span>
+        <span>脂肪${n.fat || 0}g</span>
+        <span>钠${n.sodium || 0}mg</span>
+      </div>
+      ${suitable.length ? `<div class="text-xs mt-2" style="color: var(--accent);">✓ 适合：${suitable.join('、')}</div>` : ''}
+      ${avoid.length ? `<div class="text-xs mt-1" style="color: var(--danger);">✗ 避免：${avoid.join('、')}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+async function loadFilters() {
+  const res = await fetch('/api/recipes/categories');
+  const data = await res.json();
+  const fill = (id, items) => {
+    const sel = document.getElementById(id);
+    items.forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item; opt.textContent = item;
+      sel.appendChild(opt);
+    });
+  };
+  fill('filterCategory', data.categories || []);
+  fill('filterCuisine', data.cuisines || []);
+  fill('filterMethod', data.cooking_methods || []);
+}
+
+async function loadRecipes(append = false) {
+  const keyword = document.getElementById('searchKeyword').value;
+  const category = document.getElementById('filterCategory').value;
+  const cuisine = document.getElementById('filterCuisine').value;
+  const method = document.getElementById('filterMethod').value;
+
+  if (!append) {
+    currentOffset = 0;
+    currentQuery = { keyword, category, cuisine, cooking_method: method };
+  }
+
+  const params = new URLSearchParams({
+    ...currentQuery,
+    limit: PAGE_SIZE,
+    offset: currentOffset,
+  });
+  const res = await fetch('/api/recipes?' + params);
+  const data = await res.json();
+  const grid = document.getElementById('recipeGrid');
+
+  // 真实总数（不受 limit 限制）
+  totalAll = data.total_all;
+  document.getElementById('recipeCount').textContent = totalAll;
+
+  if (!data.recipes.length) {
+    if (!append) {
+      grid.innerHTML = '<div class="col-span-full text-center py-12" style="color: var(--muted);">没有找到匹配的菜谱</div>';
+    }
+    document.getElementById('loadMoreWrap').classList.add('hidden');
+    document.getElementById('loadedCount').textContent = '';
+    document.getElementById('pageInfo').textContent = '';
+    return;
+  }
+
+  if (append) {
+    // 追加渲染
+    grid.insertAdjacentHTML('beforeend', data.recipes.map(buildRecipeCard).join(''));
+  } else {
+    // 首页渲染
+    grid.innerHTML = data.recipes.map(buildRecipeCard).join('');
+  }
+
+  currentOffset += data.recipes.length;
+  const loadedCount = currentOffset;
+  document.getElementById('loadedCount').textContent = `（已加载 ${loadedCount} / ${totalAll}）`;
+
+  // 是否还有更多
+  const loadMoreWrap = document.getElementById('loadMoreWrap');
+  if (loadedCount < totalAll) {
+    loadMoreWrap.classList.remove('hidden');
+    document.getElementById('loadMoreInfo').textContent = `还有 ${totalAll - loadedCount} 道菜可加载`;
+    document.getElementById('pageInfo').textContent = `第 ${Math.ceil(loadedCount / PAGE_SIZE)} 页 / 共 ${Math.ceil(totalAll / PAGE_SIZE)} 页`;
+  } else {
+    loadMoreWrap.classList.add('hidden');
+    document.getElementById('pageInfo').textContent = '已全部加载';
+  }
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+async function loadMore() {
+  const btn = document.getElementById('loadMoreBtn');
+  btn.classList.add('btn-loading');
+  btn.disabled = true;
+  try {
+    await loadRecipes(append = true);
+  } finally {
+    btn.classList.remove('btn-loading');
+    btn.disabled = false;
+  }
+}
+
+// 搜索/筛选时重置分页
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadFilters();
+  await loadRecipes();
+});
+</script>
+
+</body>
+</html>

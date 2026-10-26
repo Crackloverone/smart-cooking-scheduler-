@@ -1,0 +1,3846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>智能烹饪调度 Agent</title>
+<!-- 内联 favicon: 否则浏览器会去要 /favicon.ico 并拿到 404, 控制台留一条红字 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8D%B3%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#EFEFEF; --surface:#ffffff; --surface2:#f5f5f5; --border:#e5e5e5;
+    --fg:#111111; --muted:#6b7280; --accent:#F26522; --accent-hover:#e05a1a; --accent-soft:#fdeee6;
+    --good:#2e7d5b; --bad:#c0392b;
+    --radius:20px;
+    --shadow:0 1px 2px rgba(0,0,0,.04);
+    --shadow-lg:0 4px 24px rgba(0,0,0,.08);
+    /* 顶栏离视口顶的距离。**必须同时用在 .nav 的 top 与 margin-top 上**：
+       sticky 的 top 只挪"渲染位置"，不占流内空间 —— 只写 top 的话，顶栏渲染在
+       14..65，而它在文档流里仍只占 0..51，紧跟其后的内容就从 51 开始，
+       顶部 14px 永远压在顶栏底下（排程页首行模块被压 4px + 顶栏投影 ⇒
+       用户报的"上方的模块和导航栏穿模"）。margin-top 让流内位置 = 渲染位置，
+       于是 --chrome(= 顶栏下沿 65px) 与文档流自洽，谁都不可能再被压住。
+       各断点只覆盖这一个变量，top / margin-top 一起跟着走，不会半截改动。 */
+    --nav-top:calc(14px + var(--sa-t));
+    /* 页面内容离顶栏下沿的间距 —— **全站唯一一处定义**，所有站点共用。
+       排程页以前自己写 10px（比顶栏的 sticky 偏移还小），所以首行模块被盖住；
+       其他站点写 28px 只是侥幸大于 14px 才没事。统一成这一个值之后，
+       "内容永远在顶栏之下" 从"碰巧"变成结构保证。 */
+    --page-top-gap:14px;
+    /* 顶栏占掉的纵向空间(含 sticky top 偏移)。页面加载后由 fitChrome() 用
+       实测值覆盖 —— 这里只是脚本执行前的兜底, 避免首帧闪一下。 */
+    --chrome:65px;
+    /* 刘海/挖孔/圆角屏的安全区。viewport 里开了 viewport-fit=cover 之后,
+       页面会铺满整块屏幕(包括刘海底下和 Home 横条那一条), 必须自己把这些
+       区域让出来, 否则顶栏会被听筒挡住、底部按钮会被横条压住。
+       不设安全区的设备(桌面浏览器、多数安卓) env() 取兜底值 0px ——
+       所以这四个变量在普通屏幕上一律是 0, 现有桌面布局一个像素都不变。 */
+    --sa-t:env(safe-area-inset-top,0px);
+    --sa-r:env(safe-area-inset-right,0px);
+    --sa-b:env(safe-area-inset-bottom,0px);
+    --sa-l:env(safe-area-inset-left,0px);
+    /* 悬浮 AI 球的尺寸 —— **全站唯一一处定义**。
+       以前每个断点各写一遍(桌面 60 / 排程页 48 / 手机 52 / 超窄屏 44),
+       同一个球在不同界面大小不一, 看上去像两个不同的控件。
+       现在: 尺寸只在这里改, 其余断点只允许覆盖位置(right/bottom)。
+       留白(padding-bottom / 浮窗 bottom)一律用 calc() 从这些变量推导,
+       所以调大球体时不会被"内容压在球下面"这种问题追着改五个地方。 */
+    --fab-size:60px;
+    --fab-font:26px;
+    /* 常规界面贴角距离; 排程页三列都顶到视口底, 球要更贴角 */
+    --fab-inset:28px;
+    --fab-inset-plan:18px;
+    /* 浮窗底边与球顶边之间的间隙 */
+    --fab-gap:12px;
+  }
+  /* iOS 横屏会把正文自动放大(不是 bug, 是它认为"文字太小"), 结果整页布局被
+     撑爆、出现横向滚动。显式关掉这个自动缩放, 字号完全由 CSS 决定。 */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--fg);font-size:14px;line-height:1.5;
+       -webkit-font-smoothing:antialiased}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#d4d4d4;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* 悬浮胶囊导航 - iOS毛玻璃
+     ⚠ top 与 margin-top **必须同源**（都用 --nav-top）：只写 top 时顶栏会浮在
+       自己本该占的 51px 之外，压住紧跟其后的内容（见 --nav-top 的注释）。 */
+  .nav{position:sticky;top:var(--nav-top);margin-top:var(--nav-top);z-index:30;
+       display:flex;justify-content:center;
+       padding:0 calc(16px + var(--sa-r)) 0 calc(16px + var(--sa-l))}
+  .nav-inner{width:100%;max-width:1440px;background:rgba(255,255,255,.65);backdrop-filter:blur(24px) saturate(180%);
+       -webkit-backdrop-filter:blur(24px) saturate(180%);
+       border:1px solid rgba(255,255,255,.6);border-radius:999px;padding:5px;
+       display:flex;align-items:center;justify-content:space-between;
+       box-shadow:0 8px 32px rgba(0,0,0,.08)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:-.01em;padding-left:6px}
+  .brand .logo{width:36px;height:36px;border-radius:999px;background:#111;
+       display:flex;align-items:center;justify-content:center;color:#fff;
+       font-size:11px;font-weight:700;letter-spacing:-.02em}
+  .brand small{display:block;font-size:9px;color:var(--muted);font-weight:400;letter-spacing:1px;margin-top:1px}
+  .menu{display:flex;gap:10px;align-items:center}
+  .menu button{background:none;color:#111;padding:9px 18px;border-radius:999px;
+       font-size:13px;width:auto;transition:all .3s ease}
+  .menu button:hover{color:var(--muted)}
+  .menu button.on{background:rgba(17,17,17,.92);color:#fff;font-weight:500;
+       box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .tag{background:rgba(17,17,17,.9);backdrop-filter:blur(10px);color:#fff;font-size:11px;
+       padding:6px 12px;border-radius:999px;letter-spacing:.5px;margin-right:6px}
+
+  /* 模型链路状态徽标: 三态必须一眼可辨, 且**不依赖 hover**(触屏没有 hover)。
+     颜色都按"浅底 + 深字"取, 对比度足够; 不用纯色块, 免得抢主按钮的视觉。 */
+  .llm-badge{font-size:11px;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;
+       border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.6);color:var(--muted);
+       transition:all .2s;margin-right:8px;flex:none}
+  .llm-badge:hover{background:rgba(255,255,255,.9)}
+  .llm-badge.on{color:var(--good);border-color:rgba(46,125,91,.35);background:rgba(46,125,91,.1)}
+  .llm-badge.warn{color:#8a5300;border-color:rgba(138,83,0,.35);background:rgba(176,107,0,.12)}
+  .llm-badge.off{color:var(--muted);border-color:rgba(0,0,0,.1);background:rgba(17,17,17,.05)}
+
+  /* 后端不可达横幅。这个页面是"薄客户端"——数据全来自 FastAPI;
+     用 file:// 直接打开、或从静态预览打开时, 所有 /api/* 都会失败。
+     旧版没有任何失败态, 列表会永远停在"加载中...", 让人以为在加载而不是已经失败。
+     fixed 定位(与 .llm-toast 同理): 排程页高度是三列 flex 算出来的, 插流内元素会重算布局。 */
+  .offline-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + var(--sa-b));z-index:1002;
+       display:none;align-items:center;gap:10px;max-width:min(680px,calc(100vw - 32px));
+       padding:11px 14px;border-radius:14px;font-size:12px;line-height:1.5;
+       background:rgba(255,247,240,.97);border:1px solid rgba(176,107,0,.35);color:#8a5300;
+       box-shadow:0 10px 30px rgba(0,0,0,.12);backdrop-filter:blur(8px)}
+  .offline-bar.on{display:flex}
+  .offline-bar b{color:#7a4600}
+  .offline-bar a{color:#7a4600;text-decoration:underline;text-underline-offset:2px}
+  .offline-bar a:hover{color:#5c3400}
+  .offline-bar code{background:rgba(176,107,0,.12);padding:1px 6px;border-radius:5px;
+       font-size:11px;white-space:nowrap}
+  .offline-bar button{flex:none;width:auto;min-width:0;min-height:32px;padding:6px 14px;
+       border-radius:999px;border:1px solid rgba(176,107,0,.4);cursor:pointer;
+       background:rgba(255,255,255,.85);color:#7a4600;font-size:12px;
+       box-shadow:none;transition:all .2s}
+  .offline-bar button:hover{background:#fff;color:#5c3400;border-color:rgba(176,107,0,.6)}
+  .offline-bar .x{cursor:pointer;opacity:.65;flex:none}
+  .offline-bar .x:hover{opacity:1}
+
+  /* 降级提示 toast: 用 fixed 定位而不是插进排程页 —— 排程页的高度是三列 flex
+     算出来的(见下方 #v-plan 注释), 往里插元素会重算整页布局。 */
+  .llm-toast{position:fixed;left:calc(16px + var(--sa-l));bottom:calc(16px + var(--sa-b));z-index:1001;display:none;
+       max-width:min(420px,calc(100vw - 32px));padding:11px 14px;border-radius:14px;
+       font-size:12px;line-height:1.6;color:var(--fg);
+       background:rgba(255,255,255,.96);border:1px solid rgba(0,0,0,.08);
+       border-left:3px solid #b06b00;box-shadow:0 10px 32px rgba(0,0,0,.16)}
+  .llm-toast.on{display:block}
+  .llm-toast b{color:#8a5300}
+  .llm-toast .x{float:right;cursor:pointer;color:var(--muted);margin-left:10px;font-size:13px;line-height:1}
+
+  /* ---- C1 撤销条（v3.8） ----
+     ⚠ 必须 `position:fixed`，**不能进文档流** —— 与 .llm-toast 同一条纪律：
+       排程页高度是三列 flex 算出来的，插一个流内元素进去会重算整页布局，
+       把甘特图挤变形（`#ganttWrap` 里的块必须 flex:none 才安全）。
+     ⚠ 底部**居中**而不是左下：左下已经被 .llm-toast（降级提示）占着了，
+       两者同时出现（页面刚加载就点了个危险操作）会叠在一起。
+     ⚠ 按钮必须显式 `width:auto` + `color` + `box-shadow:none`：全局 `button`
+       是 `width:100%;color:#fff;box-shadow:橙`，不覆盖就会被撑成整行、字变白。 */
+  .undo-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + var(--sa-b));
+       z-index:1002;display:none;align-items:center;gap:10px;
+       max-width:min(460px,calc(100vw - 32px));padding:9px 12px;border-radius:12px;
+       font-size:12px;color:var(--fg);background:var(--surface);
+       border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.18)}
+  .undo-bar.on{display:flex}
+  .undo-bar .ub-msg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .undo-bar .ub-btn{width:auto;flex:none;color:var(--accent);background:none;border:none;
+       box-shadow:none;padding:2px 6px;font-size:12px;font-weight:600;cursor:pointer}
+  .undo-bar .ub-btn:hover{text-decoration:underline}
+  .undo-bar .x{flex:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1}
+
+  /* 顶部留白走 --page-top-gap（不是写死的 28px）：顶栏加了 margin-top 之后，
+     它的流内下沿正好是 65px，14px 的间距让内容仍落在原来的 79px 上 ——
+     观感与加 margin-top 之前逐像素一致，同时把"间距"这件事收敛到一个变量。 */
+  .view{display:none;max-width:1440px;margin:0 auto;
+       padding:var(--page-top-gap) calc(16px + var(--sa-r)) calc(48px + var(--sa-b)) calc(16px + var(--sa-l))}
+  .view.active{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .grid3{display:grid;grid-template-columns:260px 1.8fr 260px;gap:16px;align-items:start}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .card{background:rgba(255,255,255,.65);backdrop-filter:blur(20px) saturate(180%);
+        -webkit-backdrop-filter:blur(20px) saturate(180%);
+        border:1px solid rgba(255,255,255,.7);border-radius:var(--radius);
+        box-shadow:0 8px 32px rgba(0,0,0,.06);padding:20px;margin-bottom:16px;transition:box-shadow .3s}
+  .card:hover{box-shadow:0 12px 40px rgba(0,0,0,.1)}
+  .card h3{font-size:13px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;
+       font-weight:600;color:var(--fg)}
+  .badge{font-size:11px;background:rgba(255,255,255,.5);backdrop-filter:blur(8px);
+       border:1px solid rgba(255,255,255,.6);color:var(--muted);padding:3px 10px;border-radius:999px;font-weight:400}
+
+  input.search,.inp{width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,.6);border-radius:12px;
+       font-size:13px;margin-bottom:10px;background:rgba(255,255,255,.5);backdrop-filter:blur(12px);
+       -webkit-backdrop-filter:blur(12px);transition:all .2s;outline:none}
+  input.search:focus,.inp:focus{border-color:var(--accent);background:rgba(255,255,255,.85);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  .list{max-height:460px;overflow-y:auto}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .chip{font-size:12px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.55);
+        border:1px solid rgba(255,255,255,.7);cursor:pointer;transition:all .2s;color:#333}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tip-line{font-size:12px;color:var(--muted);margin-bottom:8px}
+  /* 播放条: 三个控件统一 32px 行高(实测原来是 33/16/20px 参差)。
+     原生 <input type=range> 是 Chromium 默认皮肤 —— 白色矩形轨道 + 蓝色圆点、
+     border-radius:0、无阴影, 和整站的毛玻璃 + 橙色圆角语言完全割裂, 所以
+     appearance:none 之后自己画轨道与拇指。 */
+  .playbar{display:flex;gap:10px;align-items:center;margin:10px 0}
+  .playbar>*{flex:none;height:32px}
+  .playbar button{width:auto;padding:0 14px;font-size:12px;gap:6px}
+  .playbar button:active{transform:scale(.97)}
+  #tSlider{flex:1 1 auto;min-width:0;margin:0;padding:0;height:32px;background:transparent;
+       appearance:none;-webkit-appearance:none;cursor:pointer;border-radius:999px}
+  #tSlider:focus{outline:none}
+  #tSlider:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
+  /* 轨道: 已播放段橙色填充(--p 由 syncPlaybar() 写入), 未播放段浅灰。
+     拇指要正好骑在 6px 轨道中央 ⇒ margin-top = -(16-6)/2 = -5px。 */
+  #tSlider::-webkit-slider-runnable-track{height:6px;border-radius:999px;
+       background:linear-gradient(90deg,var(--accent) 0 var(--p,0%),
+                  rgba(17,17,17,.10) var(--p,0%) 100%);
+       box-shadow:inset 0 1px 2px rgba(0,0,0,.05)}
+  #tSlider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-5px;
+       border-radius:50%;background:#fff;border:3px solid var(--accent);
+       box-shadow:0 2px 6px rgba(242,101,34,.35);transition:transform .15s}
+  #tSlider:hover::-webkit-slider-thumb,#tSlider:active::-webkit-slider-thumb{transform:scale(1.12)}
+  #tSlider::-moz-range-track{height:6px;border-radius:999px;background:rgba(17,17,17,.10)}
+  #tSlider::-moz-range-progress{height:6px;border-radius:999px;background:var(--accent)}
+  #tSlider::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;
+       border:3px solid var(--accent);box-shadow:0 2px 6px rgba(242,101,34,.35)}
+  /* 时间读数: 等宽数字 + 固定宽度 —— 否则 t=0分 → t=100分 时整行会被推来推去 */
+  #tLabel{display:block;height:32px;line-height:32px;font-size:12px;min-width:64px;
+       text-align:right;font-variant-numeric:tabular-nums;color:var(--fg)}
+  .gantt-wrap{position:relative}
+  .nowline{position:absolute;top:0;bottom:0;width:2px;background:#c0392b;z-index:5;pointer-events:none;
+       box-shadow:0 0 6px rgba(192,57,43,.6)}
+  .nowline::before{content:attr(data-t);position:absolute;top:-2px;left:4px;font-size:10px;
+       background:#c0392b;color:#fff;padding:1px 6px;border-radius:6px}
+  .bar{cursor:grab}
+  .bar:active{cursor:grabbing;opacity:.85}
+  .bar.done{opacity:.35}
+  /* 泳道图 */
+  /* overflow 用 clip 而不是 hidden: 时间轴现在可以左右滚动, 泳道标签要
+     position:sticky 冻结在左侧 —— 而 sticky 是相对"最近的滚动容器"定位的。
+     hidden 会让 .swim 自己变成一个(永不滚动的)滚动容器, sticky 就被锁死在
+     它里面、永远不动; clip 只裁切、不产生滚动容器, sticky 才能看到外层
+     #gantt 的滚动。圆角裁切效果两者一致。 */
+  .swim{position:relative;border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:clip;margin-top:6px}
+  .swim-scale{display:flex;position:relative;height:26px;background:rgba(0,0,0,.03);
+       font-size:10px;color:var(--muted);border-bottom:1px solid rgba(0,0,0,.08);
+       margin-left:110px}
+  .swim-scale span{position:absolute;transform:translateX(-50%)}
+  .lane{display:flex;align-items:stretch;border-bottom:1px solid rgba(0,0,0,.05);min-height:58px;position:relative}
+  .lane:last-child{border-bottom:none}
+  /* z-index:6 要压过甘特条(绝对定位)与 nowline(z-index:5): 横向滚动时
+     冻结的标签必须盖住滑到它下面的内容, 否则文字和色块糊在一起。 */
+  .lane-label{width:110px;flex:none;padding:6px 10px;border-right:1px solid rgba(0,0,0,.08);
+       font-size:11px;background:#f6f6f6;position:sticky;left:0;z-index:6}
+  .lane-label b{display:block;font-size:12px;color:#111}
+  .lane-track{flex:1;position:relative}
+  .lane-idle::after{content:"空闲";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+       font-size:11px;color:#bbb;letter-spacing:4px;
+       background:repeating-linear-gradient(45deg,rgba(0,0,0,.03) 0 8px,transparent 8px 16px)}
+  /* 注意 padding 必须为 0: 全局是 box-sizing:border-box, 而 .sbar 的宽度是按
+     百分比算出来的 —— 极短的任务(0.7%)算出来只有 5px, 一旦 .sbar 自身带 8px
+     左右内边距, 浏览器会把 border-box 宽度**兜底抬到 16px**, 于是末端任务被顶出
+     轨道右边界(实测 37 条里 2 条越界, 最多 11px)。把内边距挪到内部 span 上,
+     条自身就能缩到任意窄, 越界消失。 */
+  .sbar{position:absolute;top:8px;height:30px;border-radius:8px;padding:0;
+       font-size:10px;color:#fff;display:flex;align-items:center;white-space:nowrap;overflow:hidden;
+       cursor:grab;box-shadow:0 2px 6px rgba(0,0,0,.12);
+       /* 触屏: 横向手势归拖拽, 纵向仍交给页面滚动。对鼠标是空操作, 不影响桌面。 */
+       touch-action:pan-y}
+  /* 条很窄时原来的纯 overflow:hidden 会把字**从中间切掉**。.sbar 是 flex 容器,
+     text-overflow 加在它身上不生效, 必须给内部这个块级子元素; min-width:0 是让它
+     在 flex 里真的能被压缩的前提。完整信息看 title 提示。 */
+  .sbar>span{min-width:0;padding:0 7px;overflow:hidden;text-overflow:ellipsis}
+  .sbar:active{cursor:grabbing}
+  /* 视图切换按钮: 三个状态都必须看得清。
+     1) `color` 必须显式写 —— 不写就继承全局 `button{color:#fff}`, 白字压在
+        `rgba(255,255,255,.6)` 白底上, 实测对比度 **1.02**(= 完全看不见)。
+     2) `box-shadow` 也必须显式清掉 —— 全局 button 带橙色光晕。
+     3) `:hover` 必须显式覆盖 —— 全局 `button:hover` 特异性 (0,1,1) **高于**
+        `.vbtn` (0,1,0), 不覆盖的话鼠标划过未选中的按钮会变主色橙底,
+        界面上同时出现两个"看起来是选中"的按钮。 */
+  .vbtn{font-size:12px;padding:6px 18px;border-radius:999px;
+       border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.6);
+       color:var(--fg);box-shadow:none;cursor:pointer;
+       transition:background .2s ease,color .2s ease,border-color .2s ease}
+  .vbtn:hover{background:rgba(255,255,255,.92);color:var(--fg);
+       border-color:rgba(0,0,0,.2);box-shadow:none}
+  .vbtn.active{background:#111;color:#fff;border-color:#111;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .vbtn.active:hover{background:#111;color:#fff;border-color:#111}
+  .item .meta{margin-left:auto;font-size:11px;color:var(--muted);font-weight:400}
+  .item .cat{font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(17,17,17,.06)}
+  .item{padding:10px 12px;border-radius:12px;cursor:pointer;font-size:13px;
+       display:flex;align-items:center;gap:8px;transition:all .15s}
+  .item:hover{background:rgba(255,255,255,.5)}
+  .item.sel{background:rgba(242,101,34,.12);color:var(--accent);font-weight:600;
+       border:1px solid rgba(242,101,34,.2)}
+  .item .dot{width:7px;height:7px;border-radius:50%;background:#d4d4d4;flex-shrink:0;transition:all .15s}
+  .item.sel .dot{background:var(--accent);box-shadow:0 0 0 3px rgba(242,101,34,.15)}
+
+  /* 列表项: 删除/恢复（菜谱库） */
+  .chk{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);
+       margin-bottom:10px;cursor:pointer;min-height:24px;user-select:none}
+  .chk input{width:16px;height:16px;margin:0;accent-color:var(--accent);cursor:pointer;flex:none}
+  .tag-del{font-size:10px;padding:2px 8px;border-radius:999px;flex:none;
+       background:rgba(192,57,43,.12);color:#a03024;border:1px solid rgba(192,57,43,.25)}
+  .pmeta{margin-left:auto;color:var(--muted)}
+  /* ⚠ 不能写成 `#v-recipes .item.gone` —— 任何列表视图都可能要同一个"已删除"外观，
+     把样式钉死在某个视图 id 下，另一个视图会**静默**丢失样式（探针查不到，只有肉眼能看出）。 */
+  .list .item.gone{opacity:.55}
+  .list .item.gone .ptxt,.list .item.gone .pmeta{text-decoration:line-through}
+  /* 多行输入框: 全局只给 input 写了皮, textarea 会退化成浏览器默认方框
+     （白底黑边、字体不一致）, 在毛玻璃卡片上非常突兀。 */
+  textarea.inp{font-family:inherit;line-height:1.7;resize:vertical;min-height:64px}
+  /* 删除按钮: 全局 button 是橙底白字, 这里要的是"危险但克制"的描边样式。
+     color / box-shadow / :hover 三样都必须显式写 —— 少一样就会被全局规则盖住
+     (全局 button:hover 特异性 (0,1,1) 高于 button.danger (0,1,1)? 平手靠源序,
+      所以显式写 :hover 才稳)。 */
+  button.danger{background:rgba(255,255,255,.55);border:1px solid rgba(192,57,43,.35);
+       color:#a03024;box-shadow:none;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+  button.danger:hover{background:rgba(192,57,43,.12);color:#8e2f24;box-shadow:none}
+
+  .pill{display:inline-block;background:rgba(242,101,34,.1);backdrop-filter:blur(8px);
+       border:1px solid rgba(242,101,34,.2);color:var(--accent);
+       font-size:11px;padding:4px 11px;border-radius:999px;margin:2px;font-weight:500}
+
+  /* CTA 按钮 + 文本滚动动画 (毛玻璃) */
+  button{background:rgba(242,101,34,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:999px;
+       padding:11px 18px;font-size:13px;cursor:pointer;width:100%;font-weight:500;
+       transition:all .3s ease;
+       display:flex;align-items:center;justify-content:center;gap:8px;
+       box-shadow:0 4px 16px rgba(242,101,34,.25)}
+  button:hover{background:rgba(224,90,26,.95);box-shadow:0 6px 20px rgba(242,101,34,.35)}
+  button.ghost{background:rgba(255,255,255,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+       border:1px solid rgba(255,255,255,.7);color:#111;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  button.ghost:hover{background:rgba(255,255,255,.8)}
+  .btn-arrow{display:inline-flex;width:24px;height:24px;border-radius:999px;background:#fff;color:var(--accent);
+       align-items:center;justify-content:center;font-size:13px;transition:transform .5s cubic-bezier(.25,.1,.25,1)}
+  button:hover .btn-arrow{transform:rotate(-45deg)}
+
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .stat{flex:1;min-width:100px;background:rgba(255,255,255,.5);backdrop-filter:blur(12px);
+       -webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.6);
+       border-radius:16px;padding:14px 16px}
+  .stat b{font-size:28px;color:var(--fg);display:block;font-weight:600;line-height:1.05;letter-spacing:-.02em}
+  .stat span{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+
+  .row{display:flex;align-items:center;height:26px;margin-bottom:3px}
+  .lbl{width:130px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track{flex:1;height:18px;background:rgba(255,255,255,.4);backdrop-filter:blur(8px);
+       border:1px solid rgba(255,255,255,.5);border-radius:6px;position:relative;overflow:hidden}
+  .bar{position:absolute;height:18px;border-radius:6px;color:#fff;font-size:9px;line-height:18px;
+       padding-left:5px;overflow:hidden;white-space:nowrap;font-weight:600}
+  .legend{display:flex;gap:14px;font-size:11px;margin:12px 0;flex-wrap:wrap;color:var(--muted)}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:middle}
+
+  .note{background:rgba(255,255,255,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       border:1px solid rgba(255,255,255,.6);border-left:3px solid var(--accent);
+       padding:9px 13px;font-size:12px;margin-bottom:6px;border-radius:0 12px 12px 0;line-height:1.5}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{border-bottom:1px solid var(--border);padding:8px 5px;text-align:left}
+  th{color:var(--muted);font-weight:500;font-size:11px}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:28px 10px}
+
+  /* 排程诊断面板（关键路径 / 风险提示）已于 2026-10-08 按用户要求**整体移除**。
+     后端 /schedule 仍然回带 `insight` 字段（只读旁路，见 app/scheduler/insight.py），
+     只是界面不再展示。⚠ 如果以后要加回这块，务必记住它当年踩的坑：它是
+     #ganttWrap(flex 列) 的兄弟节点、而 #gantt 是 flex:1 —— 新块必须有
+     `flex:none` + `max-height`，否则一有内容就把甘特图挤到 35px（静默，只有
+     真 Edge 排版探针看得见）。 */
+
+  h1.title{font-size:clamp(28px,4vw,44px);font-weight:500;margin-bottom:6px;
+       letter-spacing:-.03em;line-height:1.08;color:#111}
+  h1.title em{color:var(--accent);font-style:normal}
+  .sub{font-size:14px;color:var(--muted);margin-bottom:20px}
+  .detail{font-size:13px;line-height:1.9;color:var(--fg)}
+
+  /* ---- 设置页（模型接入 / 厨房设备 / 访问令牌）----
+     子页签是 <button>，而全局 button 规则给了 color:#fff + width:100% + 橙底 +
+     阴影。不显式覆盖就会得到"三个页签各占满一整行、白字压橙底" ——
+     这正是 .vbtn 踩过的坑（护栏 tests/test_web_ui.py::test_view_switch_buttons_*）。
+     铁律: color / box-shadow / :hover / width 四样都要显式写。
+     优先级也要算清楚: button:hover=(0,1,1) > .stab=(0,1,0)；
+     .stab.active 与 .stab:hover 同为 (0,2,0)，靠源序压不住 ⇒ 补 .stab.active:hover。 */
+  .subtabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 16px}
+  .stab{width:auto;min-width:96px;padding:9px 18px;border-radius:999px;font-size:13px;
+       background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.7);
+       color:var(--muted);box-shadow:none;font-weight:500}
+  .stab:hover{background:rgba(255,255,255,.95);color:var(--fg);box-shadow:none}
+  .stab.active{background:rgba(17,17,17,.92);color:#fff;border-color:transparent;
+       box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .stab.active:hover{background:rgba(17,17,17,.92);color:#fff;
+       box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+  .spanel{display:none}
+  .spanel.active{display:block}
+  .set-hint{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px}
+  /* 总闸关闭时的提示必须与普通说明**一眼可分**：它说的是"下面这张卡片里填什么都不生效"。
+     复用 --bad（与 .set-log.err 同源），不新开一套配色。 */
+  .set-hint.warn{color:var(--bad)}
+  .set-label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.02em}
+  /* 标签行右侧的"现状"角标（密钥打码预览 / 出厂预置标记）。
+     刻意做在**同一行内**（inline，不新开块）—— 新增一个块级元素会把设置卡片撑高，
+     而这类"悄悄把布局挤一下"的改动只有真浏览器排版探针才看得见。 */
+  .set-note{font-weight:600;color:var(--fg);letter-spacing:0}
+  .set-note.warn{color:var(--bad)}
+  .set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .set-field{display:block}
+  .set-field .inp{margin-bottom:0}
+  /* 只读字段要一眼看出"这是信息不是输入框"，否则用户会去点它、发现没反应 */
+  .set-field .inp[readonly]{background:rgba(17,17,17,.04);color:var(--muted);cursor:default}
+  .set-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .set-actions button{width:auto;min-width:120px;padding:10px 20px;font-size:13px}
+  /* 接入方式切换：本地档隐藏"远程接口地址 / API Key"，远程档隐藏"本机已下载模型"。
+     用 id + 两个类（(1,2,0)）压过 .set-field 的 display:block —— 只写 .set-field.remote-only
+     是 (0,2,0)，跟 .set-field 同权重，靠源序才能压住，以后谁把 .set-field 挪到后面就静默失效。 */
+  #sp-model.mode-local .remote-only{display:none}
+  #sp-model.mode-remote .local-only{display:none}
+  /* 密码框：type=password 的圆点比输入框小一号，行高要补一点，否则和旁边字段对不齐 */
+  input.inp[type=password]{letter-spacing:.08em}
+  .set-log{margin-top:12px;font-size:12px;line-height:1.7;color:var(--muted);min-height:18px}
+  .set-log.ok{color:var(--good)}
+  .set-log.err{color:var(--bad)}
+  .kv{display:flex;justify-content:space-between;gap:12px;font-size:12px;
+      padding:8px 0;border-bottom:1px solid var(--border)}
+  .kv:last-child{border-bottom:none}
+  .kv span{color:var(--muted)}
+  .kv b{font-weight:500;color:var(--fg);text-align:right;word-break:break-all}
+
+  .dev-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .dev-card{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);
+      border-radius:16px;padding:16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .dev-card h4{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;
+      align-items:center;justify-content:space-between;gap:8px}
+  .dev-num{width:100%;padding:9px 12px;border:1px solid rgba(255,255,255,.7);
+      border-radius:10px;font-size:13px;background:rgba(255,255,255,.6);outline:none;
+      margin-bottom:12px;transition:all .2s}
+  .dev-num:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .dev-meta{font-size:11px;color:var(--muted);line-height:1.9}
+  .mode-chip{display:inline-block;font-size:10px;padding:2px 7px;border-radius:999px;
+      background:rgba(17,17,17,.05);color:var(--muted);margin:0 4px 4px 0}
+  .detail b{color:var(--accent)}
+  .cfg-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+  .cfg-row input{width:80px;text-align:center;padding:8px;border:1px solid rgba(255,255,255,.6);
+       border-radius:10px;background:rgba(255,255,255,.5);backdrop-filter:blur(8px)}
+
+  /* ---- v3.7 新增：工具栏 / 可点历史行 / 通用弹层 ----
+     ⚠ 工具栏按钮**必须**显式写 `width:auto` + `color` —— 全局 `button` 是
+       `width:100%;color:#fff`，不写就会被撑成整行、字变白（这个坑在
+       「动态事件·重排」那两个按钮上已经踩过一次，见该处注释）。
+     ⚠ 工具栏只准放**中间列**（排程面板）与**记录页**。右列（已选卡）任何增高都会
+       把「生成排程」推进悬浮球，且只在 1366×768 发作（见 MEMORY §五）。 */
+  .tool-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0 8px}
+  .tool-row button{width:auto;color:var(--fg);flex:none;padding:4px 11px;font-size:11px;
+       border-radius:999px;background:rgba(17,17,17,.05);border:1px solid var(--border);
+       box-shadow:none;cursor:pointer;transition:background .18s,color .18s}
+  .tool-row button:hover{background:rgba(17,17,17,.1)}
+  .tool-row button:disabled{opacity:.45;cursor:not-allowed}
+  .tool-row .tool-note{font-size:11px;color:var(--muted);margin-left:auto;min-width:0;
+       overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* 历史记录行整行可点（还原当时的计划）。用 cursor + hover 给出"能点"的信号 ——
+     原来这几行是纯文本，用户根本想不到可以点开。 */
+  .hist-row{cursor:pointer;transition:background .18s}
+  .hist-row:hover{background:rgba(17,17,17,.045)}
+  .hist-row.picked{background:rgba(242,101,34,.1)}
+  .hist-row .hist-cta{font-size:11px;color:var(--accent);flex:none}
+  .hist-pick{width:auto;flex:none;margin-right:2px}
+  /* 对比表：窄屏下横向滚动，绝不挤成两列错位 */
+  .cmp-table{width:100%;border-collapse:collapse;font-size:12px}
+  .cmp-table th,.cmp-table td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:left}
+  .cmp-table th{color:var(--muted);font-weight:500}
+  .cmp-table td.better{color:var(--good);font-weight:600}
+  .cmp-table td.worse{color:var(--bad);font-weight:600}
+  /* 通用弹层：复用 .step-modal 的遮罩与卡片，只把宽度放开给对比/清单用。 */
+  .step-modal-card.wide{max-width:760px}
+  .why-chain{font-size:12px;line-height:2;color:var(--fg);word-break:break-all}
+  .why-chain .why-node{display:inline-block;padding:1px 8px;margin:2px 2px;border-radius:999px;
+       background:rgba(242,101,34,.1);border:1px solid rgba(242,101,34,.28)}
+  .why-risk{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;margin:6px 0;
+       border-radius:12px;background:rgba(17,17,17,.04);font-size:12px;line-height:1.7}
+  .why-risk.high{background:rgba(192,57,43,.09);border-left:3px solid var(--bad)}
+  .why-risk.mid{border-left:3px solid var(--accent)}
+  .why-risk .tag{flex:none;font-size:10px;padding:1px 7px;border-radius:999px;
+       background:rgba(17,17,17,.08);color:var(--muted)}
+  .shop-item{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--border);font-size:13px}
+  .shop-item .n{font-weight:600}
+  .shop-item .a{color:var(--muted);font-size:12px}
+  .shop-item .w{margin-left:auto;font-size:11px;color:var(--accent);flex:none}
+
+  /* ------------------------------------------------------------------
+     排程页：视口内自洽布局
+     要求是"页面本身不出现滚动条" —— 所以不能让内容把 <body> 顶高。
+     做法：#v-plan 撑满 (视口高 − 顶栏实测高)，三列等高；每列恰好留一个
+     "会长大的"模块由它自己内部滚动：
+        左列 ① 选择菜品  → #recipeList
+        中列   排程面板  → #gantt
+        右列 ② 关键通知  → #notes
+     顶栏高由 JS 实测写进 --chrome（换字体/浏览器缩放都不会错位），
+     这里给的 65px 只是 JS 跑起来之前的兜底值。
+     ------------------------------------------------------------------ */
+  #v-plan.active{display:flex;flex-direction:column;
+       height:calc(100vh - var(--chrome));
+       /* 顶部留白与其他站点**同一个变量**（原来自己写 10px，比顶栏的 sticky
+          偏移 14px 还小 ⇒ 首行模块被顶栏盖住，就是用户看到的"穿模"）。
+          这一处不再有第二个真源。 */
+       padding:var(--page-top-gap) calc(16px + var(--sa-r))
+               calc(var(--fab-size) + var(--fab-inset-plan) + var(--sa-b))
+               calc(16px + var(--sa-l))}
+  /* 底部留白 = 悬浮球直径 + 贴角距离, 由变量推导(现在是 78px)。
+     排程页三列都顶到视口底, 悬浮球(fixed 右下角)原本会压住右列
+     「生成排程」主按钮 —— 已选卡搬到右列后才暴露出来的遮挡。
+     整页统一留白(而不是只给右列), 三列底边才继续对齐。
+     ⚠ 这个值必须跟着 --fab-size 走: 写死 66px 的话, 球一改大就又压回去了。 */
+  #v-plan.active ~ .fab{right:calc(var(--fab-inset-plan) + var(--sa-r));
+       bottom:calc(var(--fab-inset-plan) + var(--sa-b))}
+  /* 尺寸一律走变量 —— 这里只挪位置, 不再重定义宽高字号。 */
+  #v-plan.active ~ .float-panel{
+       bottom:calc(var(--fab-size) + var(--fab-inset-plan) + var(--fab-gap) + var(--sa-b))}
+  #v-plan .grid3{flex:1;min-height:0;align-items:stretch;gap:14px;
+       grid-template-columns:260px minmax(0,1.8fr) 260px}
+  /* 选择器必须带 :not(.card) —— 中列那张卡片本身也是 .grid3 的 div 子元素。
+     若不加排除, 卡片内部会继承 gap:14px, 8 个子块之间多出 7×14=98px 行距,
+     正好把甘特图那 97px 的可分配余量吃光, 表现为"flex:1 的甘特区怎么都不长高"
+     (排查了半天, 真因就是这条选择器撞车)。 */
+  #v-plan .grid3>div:not(.card){min-height:0;min-width:0;
+       display:flex;flex-direction:column;gap:14px}
+  #v-plan .card{margin-bottom:0;padding:16px}
+  #v-plan .grid3>div>.card{flex:none;min-height:0;min-width:0;display:flex;flex-direction:column}
+  #v-plan .grid3>div>.card.grow{flex:1 1 auto}
+  #v-plan .grid3>.card{flex:1 1 auto;min-height:0;min-width:0;display:flex;flex-direction:column}
+  /* 中列首屏信息压缩: 这是仪表盘, 不是落地页 —— 44px 的标题不该抢甘特图的地方。
+     标题与副标题并排一行, 比上下两行省 26px。 */
+  #v-plan .plan-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+       margin-bottom:8px;flex:none}
+  #v-plan .title{font-size:26px;margin-bottom:0}
+  #v-plan .sub{font-size:12px;margin-bottom:0}
+  #v-plan .stats{gap:10px;margin-bottom:10px}
+  #v-plan .stat{padding:7px 12px;border-radius:14px}
+  #v-plan .stat b{font-size:22px}
+  #v-plan .legend{margin:6px 0 4px;gap:12px}
+  #v-plan .playbar{margin:4px 0}
+  /* width:auto 必须显式写: 全局 button{width:100%}, 视图切换按钮在 flex 行里
+     会被撑成整行(实测「设备视图」拉成一条 430px 的黑条, 与另两个按钮错位)。
+     min-width 让三个按钮等宽 —— 否则文本长度不同时会参差。 */
+  #v-plan .vbtn{font-size:12px;padding:6px 20px;min-width:92px;width:auto}
+  #v-plan .tabs{display:flex;gap:8px;align-items:center;margin:0 0 4px}
+  #v-plan .tabs-hint{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  #v-plan .tasks-head{font-size:12px;margin:8px 0 4px}
+  /* 三个"会长大"的区域：min-height:0 是让 flex 子项真的能被压缩/滚动的前提 */
+  #v-plan #recipeList{flex:1;min-height:0;max-height:none;overflow-y:auto}
+  #v-plan #notes{flex:1;min-height:0;overflow-y:auto}
+  #v-plan #notes .empty{height:100%;display:flex;align-items:center;justify-content:center}
+  #v-plan #ganttWrap{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column}
+  #v-plan #gantt{flex:1;min-height:0;min-width:0;overflow:auto}
+  #v-plan .gantt-inner{position:relative;min-width:100%}
+  #v-plan #tasks{flex:none;max-height:104px;overflow-y:auto}
+  /* 固定列宽: 默认 auto 布局下"菜/步"列会吃掉全部余量, 五列被拉得东倒西歪。
+     前三列和后一列给死宽度, 剩余全给"菜/步"。 */
+  #v-plan #tasks table{table-layout:fixed}
+  #v-plan #tasks th:nth-child(1),#v-plan #tasks td:nth-child(1){width:52px}
+  #v-plan #tasks th:nth-child(2),#v-plan #tasks td:nth-child(2){width:52px}
+  #v-plan #tasks th:nth-child(3),#v-plan #tasks td:nth-child(3){width:88px}
+  #v-plan #tasks th:nth-child(4),#v-plan #tasks td:nth-child(4){width:96px}
+  #v-plan #tasks th:nth-child(6),#v-plan #tasks td:nth-child(6){width:56px}
+  #v-plan #tasks th{position:sticky;top:0;background:#f6f6f6;z-index:1}
+  /* 明细行可点开步骤详情 —— 必须给非 hover 的可点性提示(触屏没有 hover),
+     所以常态就是 cursor:pointer + 一个极轻的底色, hover 只是加深。 */
+  #v-plan #tasks tbody tr{cursor:pointer;transition:background .15s}
+  #v-plan #tasks tbody tr:hover{background:rgba(242,101,34,.07)}
+  /* 执行态标记（v3.9）。⚠ 必须排在 hover **之后**：两者特异性相同
+     (2 id + 1 类/伪类 + 2 type)，后定义的赢；放前面会被 hover 盖掉，
+     鼠标一划过"已延迟"的红色提示就没了。
+     只改背景/透明度, **不新增列、不改宽度** ⇒ 布局探针零影响。 */
+  #v-plan #tasks tbody tr.exec-done{opacity:.5}
+  #v-plan #tasks tbody tr.exec-late{background:rgba(192,57,43,.10)}
+  /* 操作步骤列: table-layout:fixed 下 nowrap + hidden + ellipsis 才会真的出省略号。
+     原文长短差很多(「无需预热」vs 一整句), 不截断会把行高顶爆。 */
+  #v-plan #tasks td.rawcell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg)}
+  #v-plan #tasks td.rawcell .synth{color:var(--muted)}
+
+  /* ---- 步骤详情弹层 ----
+     用 fixed 覆盖层而不是内联面板: #v-plan 的高度是三列 flex 算出来的
+     (见上文注释), 往里塞一个内联块会重算整页布局; 覆盖层完全不动它。 */
+  .step-modal{position:fixed;inset:0;z-index:1000;display:none;
+       align-items:center;justify-content:center;
+       padding:calc(16px + var(--sa-t)) calc(16px + var(--sa-r)) calc(16px + var(--sa-b)) calc(16px + var(--sa-l));
+       background:rgba(17,17,17,.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .step-modal.on{display:flex}
+  .step-modal-card{width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;
+       background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.8);border-radius:20px;
+       box-shadow:0 24px 64px rgba(0,0,0,.24);overflow:hidden;animation:fade .18s ease}
+  .step-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+       padding:14px 18px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.75)}
+  .step-modal-head b{font-size:14px;color:var(--fg)}
+  /* 关闭键必须显式给 color/box-shadow —— 全局 button 是白字+橙色光晕,
+     且这里用的是 span 不是 button, 不写就继承不到任何东西。 */
+  .step-close{width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;
+       border-radius:999px;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;
+       background:rgba(17,17,17,.05);box-shadow:none;transition:all .2s}
+  .step-close:hover{background:rgba(17,17,17,.1);color:var(--fg)}
+  .step-modal-body{padding:16px 18px;overflow-y:auto;font-size:13px;line-height:1.8;color:var(--fg)}
+  .step-raw{background:rgba(242,101,34,.08);border-left:3px solid var(--accent);
+       border-radius:0 12px 12px 0;padding:12px 14px;margin:10px 0 14px;
+       font-size:14px;line-height:1.7;color:var(--fg);word-break:break-word}
+  .step-kv{display:grid;grid-template-columns:72px 1fr;gap:7px 12px;font-size:12px}
+  .step-kv dt{color:var(--muted)}
+  .step-kv dd{color:var(--fg);word-break:break-word}
+  .step-hint{font-size:11px;color:var(--muted);margin-top:12px}
+
+  /* Hero */
+  .hero{position:relative;min-height:calc(100vh - 90px);display:flex;align-items:flex-end;
+       overflow:hidden;padding:var(--sa-t) calc(20px + var(--sa-r)) 0 calc(20px + var(--sa-l))}
+  .hero-blob{position:absolute;top:-20%;right:-10%;width:60vw;height:60vw;max-width:800px;max-height:800px;
+       background:radial-gradient(circle,rgba(242,101,34,.18),transparent 65%);
+       border-radius:50%;filter:blur(40px);animation:float 8s ease-in-out infinite}
+  .hero-glow{position:absolute;width:700px;height:700px;border-radius:50%;pointer-events:none;
+       background:radial-gradient(circle,rgba(242,101,34,.28),rgba(242,101,34,.08) 40%,transparent 65%);
+       transform:translate(-50%,-50%);left:50%;top:50%;z-index:1;filter:blur(10px)}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+  .hero-inner{position:relative;z-index:2;max-width:1440px;margin:0 auto;width:100%;padding-bottom:80px}
+  .hero-label{font-size:13px;color:#111;letter-spacing:.05em;margin-bottom:24px}
+  .hero-title{font-size:clamp(2.2rem,7vw,4.5rem);font-weight:500;line-height:1.08;
+       letter-spacing:-.03em;color:#111;margin-bottom:24px}
+  .hero-title .accent{color:var(--accent)}
+  .hero-sub{font-size:16px;line-height:1.7;color:#6b7280;margin-bottom:36px;max-width:560px}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:40px}
+  .hero-cta button{width:auto;padding:13px 22px;font-size:14px}
+  .hero-badges{display:flex;gap:10px;flex-wrap:wrap}
+  .hero-badge{background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);border-radius:999px;
+       padding:7px 15px;font-size:12px;color:#555;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       box-shadow:0 2px 12px rgba(0,0,0,.06);transition:all .3s}
+  .hero-badge:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
+  .glass-btn{background:rgba(255,255,255,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       border:1px solid rgba(255,255,255,.9)}
+
+  /* 悬浮 AI 球 + 浮窗。尺寸/贴角/间隙全部来自 :root 的 --fab-* 变量 ——
+     这里只写"怎么用", 不写"多大", 否则断点一多必然各自漂移。 */
+  .fab{position:fixed;right:calc(var(--fab-inset) + var(--sa-r));
+       bottom:calc(var(--fab-inset) + var(--sa-b));
+       width:var(--fab-size);height:var(--fab-size);border-radius:50%;
+       background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;
+       font-size:var(--fab-font);cursor:pointer;box-shadow:0 8px 24px rgba(242,101,34,.4);
+       backdrop-filter:blur(10px);z-index:999;transition:transform .2s}
+  .fab:hover{transform:scale(1.08)}
+  /* ⚠ height 必须带视口上限：写死 520px 时，矮视口（1084×570 / 667×375 实测）
+     浮窗会从 top 捅出视口 —— 底部锚点 + 固定高度 = 顶部溢出，用户连输入框都看不到。
+     上限按"浮窗底边到视口顶还剩多少"算，贴角/球/间隙全部从 --fab-* 推导，
+     所以改球尺寸或贴角时这里跟着走。900px 以上仍是 min(520, 788) = 520，逐像素不变。 */
+  .float-panel{position:fixed;right:calc(var(--fab-inset) + var(--sa-r));
+       bottom:calc(var(--fab-inset) + var(--fab-size) + var(--fab-gap) + var(--sa-b));
+       width:360px;z-index:998;
+       height:min(520px, calc(100vh - var(--fab-inset) - var(--fab-size) - var(--fab-gap) - var(--sa-b) - 12px));
+       display:none;flex-direction:column;border-radius:20px;overflow:hidden;
+       background:rgba(255,255,255,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+       border:1px solid rgba(255,255,255,.7);box-shadow:0 20px 60px rgba(0,0,0,.18)}
+  .float-head{padding:14px 18px;background:rgba(242,101,34,.92);color:#fff;font-size:14px;font-weight:600;
+       display:flex;justify-content:space-between;align-items:center}
+  .float-body{flex:1;overflow-y:auto;padding:12px}
+  .float-input{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(0,0,0,.06)}
+  .float-input input{flex:1;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.6);
+       border-radius:10px;padding:10px 12px;font-size:13px;outline:none}
+  /* 对话工具行。⚠ 按钮必须显式给 width/color/box-shadow —— 全局 button 是
+     width:100%;color:#fff，不写就把两个按钮都撑成整行、且在白底上看不见字。 */
+  .float-tools{display:flex;gap:6px;padding:0 12px 10px}
+  .float-tools button{width:auto;color:var(--fg);flex:none;padding:5px 11px;font-size:11px;
+       border-radius:999px;background:rgba(17,17,17,.06);border:1px solid rgba(17,17,17,.08);
+       box-shadow:none;cursor:pointer;transition:background .18s}
+  .float-tools button:hover{background:rgba(17,17,17,.12)}
+  .float-tools button:disabled{opacity:.45;cursor:not-allowed}
+  .msg{max-width:75%;padding:11px 15px;font-size:13px;line-height:1.6;margin-bottom:10px;
+       border-radius:16px;animation:fade .25s ease;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .msg-ai{background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.6);border-radius:4px 16px 16px 16px;margin-right:auto}
+  .msg-user{background:rgba(242,101,34,.85);border:1px solid rgba(255,255,255,.2);color:#fff;
+       border-radius:16px 4px 16px 16px;margin-left:auto}
+
+  /* ==================================================================
+     响应式：超宽屏 / 桌面 / 平板 / 手机 / 折叠屏 / 手机横屏
+     ------------------------------------------------------------------
+     全部是**追加**的媒体查询，不往上面任何一条基础规则里掺断点 ——
+     这套布局的间距是逐像素调出来的（见上文各段注释），混进去很容易
+     连带影响桌面回归。放在样式表最后，同特异性下自然覆盖。
+
+     ⚠ 断点顺序有讲究：**越窄/越矮的规则越要排在后面**。
+     一条属性被多个查询同时命中时，特异性相同 ⇒ 靠源序决胜。
+     所以 360 必须排在 640 之后、横屏必须排在 640 之后，
+     否则更窄的屏幕反而拿不到本该属于它的规则。
+     ================================================================== */
+
+  /* 平板：三栏挤不下，收成两栏 */
+  @media (max-width:1024px){
+    .grid3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    .grid2{grid-template-columns:minmax(0,1fr)}
+  }
+
+  /* 矮桌面视口（1280×720 / 1366×768 这类常见笔记本）专治 ——
+     桌面三列是"视口内自洽的仪表盘"，高度锁死在 100vh − --chrome。720 高时中列卡片
+     只剩 ~580px，而备菜提示条(~82) + 视图切换(~35) 又都是固定占用，时间轴被挤到
+     104px —— 与「任务明细」等高，主次彻底颠倒（实测 gantt=104 tasks=104）。
+     任务明细是次要信息：矮屏下压到 64px 并自带滚动，把空间让给时间轴。
+     1440×900 及以上不触发，观感与修复前逐字一致。 */
+  @media (min-width:1025px) and (max-height:800px){
+    #v-plan #tasks{max-height:64px}
+  }
+
+  /* 再矮一档（宽 >1024 但连整个仪表盘都摆不下）：与平板同策 —— 解除"锁视口高度"。
+     上面那条 max-height:800px 只是在仪表盘内**压缩任务明细**（还是仪表盘）；
+     这一条是**换布局档**：连三列都维持不住了，改成长页。
+     仪表盘成立的前提是"右列最小内容(606px) + 顶栏(65) + 底部留白(78) + 顶部间距(14)
+     都塞得进视口"，也就是视口高 ≳ 763px。再矮就**必然**同时出现三件事
+     （1084×570 / 1280×720 实测）：
+       ① 甘特图被压成 0~130px —— 时间轴是本页的主输出，等于白给；
+       ② 右列溢出到底部留白里 —— 悬浮球压住「生成排程」主按钮（探针 hits 实测命中）；
+       ③ 内容把 <body> 顶高 ⇒ 页面出纵向滚动条，sticky 顶栏浮在内容上（"穿模"）。
+     改成长页之后：三列各拿自然高度、甘特图有 300px 下限、滚动交给页面 ——
+     与平板/手机是同一套降级策略（见上面两条 max-width 断点），列数**不变**
+     （宽度够，仍三列），只是不再锁高。
+     ⚠ 阈值 760 是算出来的不是拍的：763 是临界；1366×768 这类常见笔记本仍留在
+       仪表盘档（768 > 760），只有真的摆不下的尺寸才降级。 */
+  @media (min-width:1025px) and (max-height:760px){
+    #v-plan.active{height:auto;min-height:calc(100vh - var(--chrome))}
+    /* flex:none 让三列各拿自然高度；align-items:start 让列之间不再互相拉平。
+       ⚠ align-items:start 同时是排版探针判定"当前处于长页档"的**唯一信号**
+         （仪表盘档是 stretch）—— 改这里必须同步 scripts/ui_layout_probe.mjs。 */
+    #v-plan .grid3{flex:none;align-items:start}
+    #v-plan #recipeList{max-height:38vh}
+    #v-plan #notes{max-height:38vh}
+    #v-plan #gantt{min-height:300px}
+    /* 任务明细在长页档里**仍然收窄**（不是平板档的 max-height:none）：
+       它是次要信息，三列宽屏下全部展开能到 1000+px，把整页拉成一条长卷。
+       给一个 260px 的自滚动窗，主输出（时间轴）才保持是主角。 */
+    #v-plan #tasks{max-height:260px;overflow:auto}
+    #v-plan #tasks table{min-width:600px}
+  }
+
+  /* 平板竖屏（iPad 768×1024 / mini 744 / Air 820）专治 ——
+     排程页是"视口内自洽的三列仪表盘"。收成两栏后第三列会掉到第二行，
+     三块各被压成 ~100px 高，甘特图彻底没法看。这里改成单列长页：
+     高度交给内容、滚动交给页面，比"硬挤在两行里"可用得多。
+     注意必须排在 max-width:1024px 之后，否则被那条的 .grid3 两栏盖回去。 */
+  @media (min-width:641px) and (max-width:1024px){
+    #v-plan.active{height:auto;min-height:calc(100vh - var(--chrome));
+         padding-bottom:calc(var(--fab-size) + var(--fab-inset-plan) + var(--sa-b))}
+    #v-plan .grid3{grid-template-columns:minmax(0,1fr);gap:12px}
+    #v-plan .grid3>div:not(.card){gap:12px}
+    #v-plan #recipeList{max-height:38vh}
+    #v-plan #gantt{min-height:300px}
+    #v-plan #tasks{max-height:none;overflow-x:auto}
+    #v-plan #tasks table{min-width:600px}
+
+    /* iPad 也是触摸屏 —— 点击目标同样要抬到 ≥44px。
+       只把触控尺寸给 640 断点的话，平板上所有按钮/筛选项都偏小，
+       而"平板用鼠标"其实是极少数情况。 */
+    button{min-height:44px}
+    .item{min-height:44px}
+    .chip{min-height:44px;display:inline-flex;align-items:center}
+    .playbar>*{height:44px}
+    .playbar button{height:44px;min-height:44px}
+    #tSlider{height:44px}
+    #tLabel{height:44px;line-height:44px}
+    .lane{min-height:64px}
+    .sbar{top:10px;height:44px}
+  }
+
+  /* 手机 */
+  @media (max-width:640px){
+    /* 只覆盖 --nav-top / --page-top-gap 这两个变量：top / margin-top / 各站点留白
+       一起跟着走（见 :root 注释）。⚠ 这里必须**同时**改两个 —— 只改 .view 不改
+       #v-plan 就会出现"排程页比别的站点少 8px 上边距"，正是用户报的"UI 不一致"。
+       所以两处都写成 var(--page-top-gap)，一个变量说了算。 */
+    :root{--nav-top:calc(8px + var(--sa-t)); --page-top-gap:16px}
+    .nav{padding:0 calc(10px + var(--sa-r)) 0 calc(10px + var(--sa-l))}
+    .nav-inner{border-radius:22px;flex-wrap:wrap;gap:6px;padding:8px}
+    .brand{order:1;font-size:13px}
+    .nav-inner>div:last-child{order:2}
+    /* 5 个入口一行放不下：横向滚动，而不是换行把首屏顶掉。
+       order 让"品牌+状态徽标"留在第一行、菜单整行落到第二行。 */
+    .menu{order:3;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:2px;
+          -webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .menu::-webkit-scrollbar{display:none}
+    .menu button{padding:10px 14px;flex:none}
+    .llm-badge,.tag{font-size:10px;padding:5px 9px}
+
+    .view{padding:var(--page-top-gap) calc(10px + var(--sa-r)) calc(32px + var(--sa-b)) calc(10px + var(--sa-l))}
+    .grid3,.grid2{grid-template-columns:minmax(0,1fr)}
+    /* 排程页在手机上不再是"视口内自洽的仪表盘"，而是一张正常滚动的长页 ——
+       三栏挤在一屏里必然什么都看不清。桌面那套 height:calc(100vh - --chrome)
+       的算法保持不动，这里只是解除它。 */
+    #v-plan.active{height:auto;min-height:calc(100vh - var(--chrome));
+         padding:var(--page-top-gap) calc(10px + var(--sa-r))
+                 calc(var(--fab-size) + var(--fab-inset-plan) + var(--sa-b))
+                 calc(10px + var(--sa-l))}
+    #v-plan .grid3{grid-template-columns:minmax(0,1fr);flex:none}
+    #v-plan #recipeList{max-height:44vh}
+    #v-plan #gantt{min-height:240px}
+    #v-plan #tasks{max-height:none;overflow-x:auto}
+    /* 六列明细在 390px 下放不下：给表一个最小宽度并横向滚动，
+       而不是把每个格子挤成一列竖排的字。 */
+    #v-plan #tasks table{min-width:560px}
+
+    /* 触控：点击目标统一抬到 ≥44px（Apple HIG / Material 的通行下限）。
+       桌面尺寸一律不动 —— 改的是"手指够不够得着"，不是视觉密度。 */
+    button{min-height:44px}
+    .item{padding:13px 12px;min-height:44px}
+    /* .chip 不是 button，吃不到全局的 min-height:44px —— 实测它在手机上只有
+       38px 高（12px 字 × 1.5 行高 + 18px 内边距 + 2px 边框），低于 44px 触控下限。
+       菜系筛选是高频点击项，必须单独抬。 */
+    .chip{padding:9px 13px;min-height:44px;display:inline-flex;align-items:center}
+    #v-plan .vbtn{padding:11px 14px;min-width:0;flex:1}
+    /* 三个视图切换按钮 + 右侧提示挤在同一行时，按钮被压到 70px（实测 390×844），
+       而「设备视图」4 个 12px 汉字本身就要 ~48px，加左右内边距 28px = 76px ⇒
+       文字贴边。让提示独占一行，按钮就能拿满整行宽度（约 106px）。 */
+    #v-plan .tabs{flex-wrap:wrap;gap:6px}
+    #v-plan .tabs-hint{flex:0 0 100%;margin-left:0;text-align:right}
+    .vbtn{padding:10px 14px}
+    .step-close{width:44px;height:44px}
+    /* 播放条：滑块是 #tSlider(1,0,0)，比 .playbar>*(0,1,1) 特异性高，
+       所以三个都要显式给高度，否则行内三个控件高矮不一。 */
+    .playbar>*{height:44px}
+    #tSlider{height:44px}
+    #tLabel{height:44px;line-height:44px}
+    .playbar button{min-height:44px;padding:0 16px}
+    /* 甘特条：视觉高度直接抬到 44px（不用 ::after 撑 —— .sbar 是
+       overflow:hidden，撑出去的部分会被裁掉，等于没撑）。泳道同步加高。 */
+    .lane{min-height:70px}
+    .sbar{top:12px;height:44px;font-size:11px}
+
+    .float-panel{left:calc(10px + var(--sa-l));right:calc(10px + var(--sa-r));width:auto;
+         bottom:calc(var(--fab-inset) + var(--fab-size) + var(--fab-gap) + var(--sa-b));
+         height:min(520px,62vh)}
+    /* 手机上球更贴角（14px），但**尺寸不缩** —— 触控目标反而更需要 60px。
+       贴角距离也只改这一个变量：.fab 与 .float-panel 都从 --fab-inset 推导，
+       免得"球挪了、浮窗没挪"这种半截改动。
+       排程页里 `#v-plan.active ~ .fab`(1,2,0) 直接写死了 18px 贴角，
+       会盖掉这里的 14px —— 与上面那条留白公式(同样按 18px 推)自洽。 */
+    :root{--fab-inset:14px}
+    .step-modal{padding:calc(10px + var(--sa-t)) calc(10px + var(--sa-r)) calc(10px + var(--sa-b)) calc(10px + var(--sa-l))}
+    .step-modal-card{max-height:88vh}
+    .step-kv{grid-template-columns:64px 1fr}
+  }
+
+  /* 折叠屏外屏 / 小屏手机（Fold 外屏 280、iPhone SE 320、安卓主流 360）——
+     再压一轮内边距与字号。这里的目标不是"好看"，是**别横向溢出**：
+     320px 下 .view 左右各 10px + 卡片 20px 内边距已经吃掉 60px，
+     留给内容只剩 260px，稍宽的统计块/表格就会把整页撑出横向滚动条。 */
+  @media (max-width:360px){
+    :root{--nav-top:calc(6px + var(--sa-t)); --page-top-gap:12px}
+    .nav{padding:0 calc(6px + var(--sa-r)) 0 calc(6px + var(--sa-l))}
+    .nav-inner{padding:6px;border-radius:16px;gap:5px}
+    .brand{font-size:12px}
+    .brand small{display:none}
+    .menu button{padding:10px 11px;font-size:12px}
+    .llm-badge,.tag{font-size:10px;padding:4px 8px;margin-right:4px}
+
+    .view{padding:var(--page-top-gap) calc(6px + var(--sa-r)) calc(24px + var(--sa-b)) calc(6px + var(--sa-l))}
+    .card{padding:14px;border-radius:16px}
+    h1.title{font-size:24px}
+    .stats{gap:8px}
+    .stat{padding:11px 12px;min-width:88px}
+    .stat b{font-size:22px}
+    .lbl{width:96px}
+    #v-plan .card{padding:12px}
+    #v-plan.active{padding:var(--page-top-gap) calc(6px + var(--sa-r))
+         calc(var(--fab-size) + var(--fab-inset-plan) + var(--sa-b))
+         calc(6px + var(--sa-l))}
+    .step-kv{grid-template-columns:56px 1fr}
+    .step-modal{padding:calc(6px + var(--sa-t)) calc(6px + var(--sa-r)) calc(6px + var(--sa-b)) calc(6px + var(--sa-l))}
+  }
+
+  /* 手机横屏（矮视口）：可用高度只有 320~430px，纵向是最稀缺的资源。
+     导航压回一行、hero 去掉装饰、排程页**恢复"视口内自洽"** ——
+     横屏时宽度够并三列，高度不够，所以这里反而要锁高度、让各列自己滚，
+     与竖屏"整页滚动"的取向正好相反。 */
+  @media (max-height:500px) and (orientation:landscape){
+    :root{--nav-top:calc(4px + var(--sa-t)); --page-top-gap:8px}
+    .nav{padding:0 calc(8px + var(--sa-r)) 0 calc(8px + var(--sa-l))}
+    .nav-inner{border-radius:14px;padding:4px;flex-wrap:nowrap;gap:6px}
+    .brand small{display:none}
+    .menu{order:0;width:auto;flex-wrap:nowrap;overflow-x:auto;gap:4px}
+    .menu button{padding:8px 12px;font-size:12px}
+    .llm-badge,.tag{font-size:10px;padding:4px 8px}
+
+    .view{padding:var(--page-top-gap) calc(8px + var(--sa-r)) calc(12px + var(--sa-b)) calc(8px + var(--sa-l))}
+    /* hero 占满一屏，在矮横屏里等于"首屏什么都看不到" */
+    .hero{min-height:auto;align-items:flex-start;
+          padding:calc(16px + var(--sa-t)) calc(16px + var(--sa-r)) 16px calc(16px + var(--sa-l))}
+    .hero-inner{padding-bottom:0}
+    .hero-label{margin-bottom:12px}
+    .hero-title{font-size:clamp(1.5rem,4.2vw,2.2rem);margin-bottom:10px}
+    .hero-sub{font-size:13px;margin-bottom:14px;max-width:none}
+    .hero-cta{margin-bottom:14px}
+    /* 两个大模糊圆在矮屏纯耗 GPU，且被裁得只剩一条边 */
+    .hero-blob{display:none}
+    .hero-glow{width:420px;height:420px}
+
+    #v-plan.active{height:calc(100vh - var(--chrome));min-height:0;
+         padding:var(--page-top-gap) calc(8px + var(--sa-r))
+                 calc(var(--fab-size) + var(--fab-inset-plan) + var(--sa-b))
+                 calc(8px + var(--sa-l))}
+    /* 用比例而不是固定列宽：667px 和 932px 两种横屏宽度都能各自撑开 */
+    #v-plan .grid3{grid-template-columns:minmax(0,1fr) minmax(0,1.7fr) minmax(0,1fr);gap:10px}
+    #v-plan .grid3>div:not(.card){gap:10px}
+    #v-plan .card{padding:12px}
+    #v-plan #tasks{max-height:72px}
+    /* 播放条三者必须等高（§3c 的"控件在同一行"是按高度差 ≤2px 判的）。
+       .playbar button 是 (0,1,1)，能压住全局 button 的 min-height ——
+       三者给同一个值，横屏下才不会出现"按钮 44 / 滑块 40"的参差。
+       横屏同样不缩触控目标：844×390 仍在 (max-width:1024px) 的覆盖范围内，
+       缩到 36px 会直接跌破 44px 下限。 */
+    .playbar>*{height:44px}
+    .playbar button{height:44px;min-height:44px}
+    #tSlider{height:44px}
+    #tLabel{height:44px;line-height:44px}
+    .lane{min-height:56px}
+    .sbar{top:6px;height:44px}
+    /* 这里原来把球缩到 44px —— 已统一为 --fab-size(60px)，尺寸不再有断点覆盖。
+       矮屏省空间应该省在内容上，而不是把触控目标缩到 44px 以下再缩球。 */
+    .float-panel{height:min(340px,72vh)}
+  }
+
+  /* 超宽屏（1920 / 2560 / 带鱼屏）：内容区不再拉满，侧栏加宽。
+     2560px 下若还按 1440 上限居中，两侧会空出大片；但直接拉满又会让
+     正文一行排到 1400px 宽，读起来要来回甩头 —— 所以放宽到 1680 就收住。 */
+  @media (min-width:1800px){
+    .nav-inner,.view,.hero-inner{max-width:1680px}
+    .grid3{grid-template-columns:320px 1.9fr 320px;gap:22px}
+    .grid2{gap:22px}
+    .card{padding:24px}
+    #v-plan .grid3{grid-template-columns:320px minmax(0,1.9fr) 320px;gap:18px}
+    #v-plan .grid3>div:not(.card){gap:18px}
+    #v-plan .card{padding:18px}
+    .stat b{font-size:32px}
+    h1.title{font-size:clamp(40px,3vw,52px)}
+    .hero-title{font-size:clamp(3.2rem,5vw,5.2rem)}
+  }
+</style>
+</head>
+<body>
+<nav class="nav">
+ <div class="nav-inner">
+  <div class="brand"><div class="logo">智</div>
+    <div>智能烹饪调度<small>FOTILE · ZX-2026-030</small></div></div>
+  <div class="menu">
+    <!-- 快捷键写在 title 里（悬停可见，零布局成本）。⚠ 索引顺序就是快捷键 1–5：
+         键盘处理里用 `document.querySelectorAll('.menu button')[i]` 取按钮再调
+         `show()`，所以**调整这里的顺序会同时改变快捷键**，这是有意的（顺序即语义）。 -->
+    <button class="on" onclick="show('home',this)" title="主页（快捷键 1）">主页</button>
+    <button onclick="show('plan',this)" title="智能排程（快捷键 2）">智能排程</button>
+    <button onclick="show('recipes',this)" title="菜谱库（快捷键 3）">菜谱库</button>
+    <button onclick="show('settings',this)" title="设置（快捷键 4）">设置</button>
+    <button onclick="show('history',this)" title="记录（快捷键 5）">记录</button>
+  </div>
+  <div style="display:flex;align-items:center">
+    <span class="llm-badge off" id="llmBadge" onclick="refreshLlmStatus(true)" title="点击刷新模型状态">○ 检测中</span>
+    <span class="tag">Q1 2026</span>
+  </div>
+ </div>
+</nav>
+
+<!-- 视图0: Hero 主页 -->
+<div class="view active" id="v-home" style="padding:0">
+  <div class="hero" id="hero" onmousemove="heroMove(event)">
+    <div class="hero-blob"></div>
+    <div class="hero-glow" id="heroGlow"></div>
+    <div class="hero-inner">
+      <div class="hero-label">智能烹饪调度 Agent · ZX-2026-030</div>
+      <h1 class="hero-title">
+        多菜并行，<span>同时出锅</span><br/>
+        让你的厨房<span class="accent">不再手忙脚乱</span>
+      </h1>
+      <p class="hero-sub">从自然语言菜谱自动抽设备、时长与依赖，在有限厨电上<br/>做零冲突排程；临时加菜也能最小扰动重排。</p>
+      <div class="hero-cta">
+        <button onclick="show('plan',document.querySelectorAll('.menu button')[1])">开始排程 <span class="btn-arrow">→</span></button>
+        <button class="ghost glass-btn" onclick="toggleFloat(true)">和 AI 聊聊 <span class="btn-arrow" style="color:#111">→</span></button>
+      </div>
+      <div class="hero-badges">
+        <span class="hero-badge glass">🍳 7 类厨电</span>
+        <span class="hero-badge glass">⏱ 出锅差 &lt;5min</span>
+        <span class="hero-badge glass">🤖 LLM 对话点菜</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 视图1: 排程 -->
+<div class="view" id="v-plan">
+  <div class="grid3">
+    <div>
+      <div class="card grow">
+        <h3>① 选择菜品 <span class="badge" id="selCount">0道</span></h3>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <!-- ⚠ 回车必须等于"按下右边那个按钮"。全站唯一带回车处理的输入框原来是
+               `#chatInput2`，其余十几个单行框敲回车**毫无反应** —— 用户第一反应是
+               "卡住了"（`scripts/ui_click_audit.mjs` 的回车遍历就是为这个写的）。 -->
+          <input class="search" id="agentText" placeholder="🤖 一句话让AI排菜, 如:两荤一素快点" style="margin:0;flex:1"
+                 onkeydown="if(event.key==='Enter')agentPlan()">
+          <button class="ghost glass-btn" style="width:auto;padding:0 12px" onclick="agentPlan()">AI排</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <!-- 这个框是 `oninput` 实时搜的，回车只做"立即再刷一次"（并让输入法收起），
+               属于锦上添花；真正的缺口是下面那些"填完要按保存"的框。 -->
+          <input class="search" id="search" placeholder="搜索菜名..." oninput="loadRecipes()" style="margin:0;flex:1"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();loadRecipes();this.blur()}">
+          <button class="ghost glass-btn" style="width:auto;padding:0 14px" onclick="clearSel()">清除</button>
+        </div>
+        <div class="chips" id="catChips"></div>
+        <div class="tip-line">出餐顺序建议：先炖汤 → 再蒸烤 → 快炒压台</div>
+        <div class="list" id="recipeList"><div class="empty">加载中...</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="plan-head">
+        <h1 class="title">智能烹饪 <em>排程</em></h1>
+        <p class="sub">多设备零冲突 · 同时出锅 · 动态重排</p>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="legend" id="legend"></div>
+        <div class="playbar">
+          <button onclick="togglePlay()" id="playBtn">▶ 播放</button>
+          <input type="range" id="tSlider" min="0" max="100" value="0" oninput="seekT(this.value)">
+          <b id="tLabel">t=0分</b>
+        </div>
+      <div class="gantt-wrap" id="ganttWrap">
+        <div class="tabs">
+          <button class="vbtn active" onclick="setView('device',this)">设备视图</button>
+          <button class="vbtn" onclick="setView('dish',this)">菜品视图</button>
+          <button class="vbtn" onclick="setView('hand',this)">人力轨道</button>
+          <span class="tabs-hint" id="ganttHint" style="visibility:hidden">↔ 时间轴可左右滚动</span>
+        </div>
+        <div id="prepBanner"></div>
+        <div id="gantt"><div class="empty">选3-5道菜, 点「生成排程」</div></div>
+      </div>
+      <h3 class="tasks-head">任务明细 <span class="badge" id="taskCount"></span></h3>
+      <!-- 计划工具栏（v3.7）。⚠ 只准放**中间列**：右列（已选卡）任何增高都会把
+           「生成排程」推进悬浮球，且只在 1366×768 发作（真 Edge 排版探针实测过）。
+           这一行在 `#ganttWrap` **外面** —— 放进 ganttWrap 会参与它的 flex 分配，
+           新块一有内容就把甘特图挤到 35px（见 MEMORY §五）。 -->
+      <div class="tool-row" id="planTools">
+        <button onclick="openWhy()" id="whyBtn" title="关键路径 + 风险提示 + 冲突归因">为什么这样排</button>
+        <button onclick="openShopping()" id="shopBtn" title="把已选菜的食材合并成一份采购清单">采购清单</button>
+        <button onclick="exportTasksCSV()" id="csvBtn" title="导出任务明细 CSV（Excel 可直接打开）">导出 CSV</button>
+        <button onclick="exportSheet()" id="sheetBtn" title="打开打印友好的作业单，可另存为 PDF">作业单</button>
+        <button onclick="openCalib()" id="calibBtn" title="经验回流：系统从你报过的实际用时里学到了什么">执行经验</button>
+        <span class="tool-note" id="planToolNote"></span>
+      </div>
+      <!-- D4 不可行/风险建议。没有要说的就是**空容器**（高度 0），不会挤到甘特图。 -->
+      <div id="hints"></div>
+      <div id="tasks"></div>
+    </div>
+    <div>
+      <div class="card grow">
+        <h3>② 关键节点通知</h3>
+        <div id="notes"><div class="empty">生成排程后显示</div></div>
+      </div>
+      <div class="card">
+        <h3>③ 动态事件 · 重排</h3>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:8px">模拟插单 / 设备故障, 最小扰动重排</p>
+        <select id="eventType" class="inp" style="margin-bottom:8px" onchange="onEventChange()">
+          <option value="insert">插单(加一道菜)</option>
+          <option value="stove">设备故障: 灶具坏了</option>
+          <option value="steamer">设备故障: 蒸箱坏了</option>
+          <option value="oven">设备故障: 烤箱坏了</option>
+        </select>
+        <!-- 插单必须能**指定加哪一道**。原实现是 `pool[random]` 随机挑，
+             用户既没法选、也复现不了上一次的结果（同一句"插单"两次加的菜不同），
+             演示时完全讲不清发生了什么。留空 = 随机，保持"一键试试"的快捷路径。 -->
+        <select id="insertPick" class="inp" style="margin-bottom:8px">
+          <option value="">随机挑一道没选的菜</option>
+        </select>
+        <!-- 「恢复默认」= 事件档位退回默认档 + 清掉上一次的结果摘要。
+             ⚠ `width`/`color` 必须**显式写**：全局 `button{width:100%;color:#fff}` 会
+               泄漏到这一行 —— 不写就把两个按钮都撑成整行，且「恢复默认」变白字。
+             ⚠ `flex-wrap:wrap` + `min-width:0` 也是必须的：667×375（iPhone 8 横屏）
+               下右栏只有一百来像素，两个按钮并排**一定会**把「恢复默认」捅出视口
+               （真 Edge 排版探针实测 `#eventResetBtn@670`，视口宽 667）。wrap 之后
+               窄屏下它自动落到第二行，宽屏下仍是并排。 -->
+        <div style="display:flex;gap:8px;align-items:stretch;flex-wrap:wrap">
+          <button class="ghost" id="reschedBtn" onclick="triggerEvent()" style="flex:1;min-width:0">应用重排 <span class="btn-arrow" style="color:#111">→</span></button>
+          <button class="ghost" id="eventResetBtn" onclick="resetEvent()"
+                  style="width:auto;flex:none;padding:0 14px;font-size:12px;white-space:nowrap">恢复默认</button>
+        </div>
+        <div id="resched" style="margin-top:10px;font-size:11px;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <h3>已选</h3>
+        <div id="selPills" style="min-height:30px"><span class="empty">未选菜</span></div>
+        <!-- ⚠ 这个输入框原来是个**摆设**：HTML 有、样式有、用户能改，但全文件没有
+             任何 JS 读它、后端也不接受 dinner 字段 —— 设了 18:30 完全没作用。
+             现在它真的参与计算：把排程结果里的**相对分钟**（t=0 = 第一个占用资源的
+             任务）锚到墙上时钟，于是"几点开始下厨"有答案了。
+             注意它**不是约束**（不会反过来逼求解器压缩总时长），只是把相对时间
+             翻译成人话；真的来不及就如实说"来不及"。
+             ⚠ 这一行**必须只占一行**：右列内容本来就顶到悬浮球上沿，多一行就把
+               「生成排程」主按钮推进球里（真 Edge 排版探针 1366×768 实测重叠 17px）。
+               所以提示取最短说法、完整解释放 title、并用 ellipsis 兜住任意长度。 -->
+        <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+          <label style="font-size:12px;color:var(--muted);flex:none">开饭</label>
+          <input type="time" id="dinnerTime" value="18:30" onchange="updDinnerHint()"
+                 style="flex:none;padding:2px 6px;border-radius:9px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.5);font-size:12px">
+          <span id="dinnerHint" style="font-size:11px;color:var(--muted);line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:stretch">
+          <select id="kitchenPreset" class="inp" style="flex:1;min-width:0;margin-top:0" onchange="applyKitchen(this.value)">
+            <option value="" disabled>选择厨房预设…</option>
+          </select>
+          <!-- `min-width:0` 是必须的：flex 项默认 `min-width:auto`，下拉里的长选项
+               （"专业级厨电套装（灶眼数3·蒸箱2·烤箱2·冰箱2）"）会把它撑到超出容器，
+               把「恢复默认」挤出卡片。 -->
+          <button class="ghost" id="kitchenResetBtn" onclick="resetKitchen()"
+                  style="width:auto;flex:none;padding:0 14px;font-size:12px;white-space:nowrap">恢复默认</button>
+        </div>
+        <!-- 预设说明 / 应用结果。原实现选完什么都不显示：用户不知道到底切没切、
+             切成了什么、失败没有 —— 只有下次点「生成排程」才发现结果不一样。 -->
+        <div id="kitchenNote" style="margin-top:6px;font-size:11px;color:var(--muted);line-height:1.5;min-height:15px"></div>
+        <button style="margin-top:12px" onclick="run()" title="生成排程（快捷键 G）">生成排程 <span class="btn-arrow">→</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 视图: 菜谱库（增删改查） -->
+<div class="view" id="v-recipes">
+  <div class="grid2">
+    <div class="card">
+      <h3>菜谱库 <span class="badge" id="libCount"></span>
+        <button class="ghost glass-btn" style="width:auto;float:right;padding:4px 14px;font-size:12px"
+                onclick="newRecipe()">+ 新增</button>
+      </h3>
+      <input class="search" id="libSearch" placeholder="搜索菜名..." oninput="loadLib(this.value)"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();loadLib(this.value);this.blur()}">
+      <label class="chk"><input type="checkbox" id="libShowDeleted" onchange="loadLib()"> 显示已删除（可在此恢复）</label>
+      <div class="list" id="libList"><div class="empty">加载中...</div></div>
+    </div>
+    <div class="card">
+      <h3>菜谱详情</h3>
+      <div id="libDetail"><div class="empty">点击左侧菜品查看详情</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 视图3: 设置（模型接入 / 厨房设备 / 访问令牌）
+     原来「设备」是独立站点, 现并入本页的子页签。
+     站点数仍然是 5: 主页 / 排程 / 菜谱库 / 设置 / 记录
+     —— 增删站点必须同步三处计数(见 MEMORY §五): .menu、ui_probe.mjs 的 views、
+     ui_layout_probe.mjs 的 VIEWS, 少改一处探针就会静默量错页面。 -->
+<div class="view" id="v-settings">
+  <h1 class="title">你的厨房，<em>你的节奏</em></h1>
+  <p class="sub">选择模型接入，配置厨房设备，管理访问令牌。</p>
+  <div class="subtabs" id="setTabs">
+    <button class="stab active" data-tab="model" onclick="setTab('model',this)">模型接入</button>
+    <button class="stab" data-tab="devices" onclick="setTab('devices',this)">厨房设备</button>
+    <button class="stab" data-tab="token" onclick="setTab('token',this)">访问令牌</button>
+  </div>
+
+  <!-- 子页签 1: 模型接入 -->
+  <!-- 初始类带 mode-local：loadModelSettings() 失败（后端没起）时也不会把
+       "远程接口地址 / API Key" 两栏露出来 —— 它们的显隐完全由 mode-* 类决定。 -->
+  <div class="spanel active mode-local" id="sp-model">
+    <div class="card">
+      <h3>模型接入 <span class="badge" id="setProvBadge">—</span>
+        <button class="ghost glass-btn" style="width:auto;padding:4px 14px;font-size:12px"
+                onclick="loadModelSettings()">刷新</button>
+      </h3>
+      <p class="set-hint" id="setModelHint">正在读取模型配置…</p>
+      <div class="set-grid">
+        <label class="set-field"><span class="set-label">接入方式</span>
+          <select class="inp" id="setProviderSel" onchange="onProviderPick()"></select></label>
+        <label class="set-field"><span class="set-label">当前生效（只读）</span>
+          <input class="inp" id="setProvider" value="—" readonly></label>
+        <label class="set-field"><span class="set-label">接口根地址（当前生效）</span>
+          <input class="inp" id="setBaseUrl" value="—" readonly></label>
+        <!-- 下面两项只在「远程」档出现：本地 Ollama 免密钥，地址就是本机 11434。
+             显隐由 #sp-model 上的 mode-local / mode-remote 类控制（见 onProviderPick）。
+             元素**始终留在 DOM 里**（只是 display:none）—— 探针按 id 取值，
+             直接从 DOM 摘掉会让"取不到值"和"值为空"变成同一个现象。 -->
+        <label class="set-field remote-only" id="setRemoteUrlField"><span class="set-label">远程接口地址</span>
+          <input class="inp" id="setRemoteUrl" placeholder="https://…/v1" autocomplete="off"
+                 onkeydown="if(event.key==='Enter')saveModel()"></label>
+        <label class="set-field remote-only" id="setRemoteKeyField"><span class="set-label">远程 API Key
+          <b class="set-note" id="setRemoteKeyNote"></b></span>
+          <input class="inp" id="setRemoteKey" type="password" placeholder="留空 = 保持原值"
+                 autocomplete="new-password" onkeydown="if(event.key==='Enter')saveModel()"></label>
+        <label class="set-field local-only"><span class="set-label">本机已下载模型</span>
+          <select class="inp" id="setModelSel" onchange="onModelPick()"></select></label>
+        <label class="set-field"><span class="set-label">模型 ID（也可直接填写）</span>
+          <input class="inp" id="setModelInput" placeholder="如 qwen2.5:7b" autocomplete="off"
+                 onkeydown="if(event.key==='Enter')saveModel()"></label>
+      </div>
+      <div class="set-actions">
+        <button onclick="saveModel()">保存模型</button>
+        <button class="ghost glass-btn" onclick="testModel()">测试连接</button>
+      </div>
+      <div class="set-log" id="setModelLog"></div>
+    </div>
+    <div class="card">
+      <h3>当前生效状态 <span class="badge" id="setStateBadge"></span></h3>
+      <div id="setModelState"><div class="empty">加载中...</div></div>
+    </div>
+  </div>
+
+  <!-- 子页签 2: 厨房设备（原「设备」站点） -->
+  <div class="spanel" id="sp-devices">
+    <div class="card">
+      <h3>厨房设备 <span class="badge">影响调度资源</span>
+        <button class="ghost glass-btn" style="width:auto;padding:4px 14px;font-size:12px"
+                onclick="saveDevices()">保存配置</button>
+      </h3>
+      <p class="set-hint">数量决定并行能力：灶眼数 = 2 表示可以同时炒两道菜；置 0 表示该设备不可用（故障或未购置），排程会自动避开它。</p>
+      <div class="dev-grid" id="devRows"><div class="empty">加载中...</div></div>
+      <div class="set-log" id="setDevLog"></div>
+    </div>
+  </div>
+
+  <!-- 子页签 3: 访问令牌 -->
+  <div class="spanel" id="sp-token">
+    <div class="card">
+      <h3>访问令牌</h3>
+      <p class="set-hint">仅当部署者用 <b>FT_AUTH_TOKEN</b> 开启了鉴权时才需要填写。令牌只保存在本机浏览器（localStorage），不写进源码、也不会随页面分享出去。</p>
+      <div class="set-grid">
+        <label class="set-field"><span class="set-label">令牌</span>
+          <input class="inp" id="setToken" placeholder="粘贴访问令牌" autocomplete="off"
+                 onkeydown="if(event.key==='Enter')saveToken()"></label>
+      </div>
+      <div class="set-actions">
+        <button onclick="saveToken()">保存并重试</button>
+        <button class="ghost glass-btn" onclick="askClearToken()" title="清除本机保存的访问令牌（可撤销）">清除</button>
+      </div>
+      <div class="set-log" id="setTokenLog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 视图4: 排程记录 -->
+<div class="view" id="v-history">
+  <div class="card" style="max-width:720px">
+    <h3>历史排程记录 <span class="badge" id="histCount"></span></h3>
+    <!-- ⚠ 工具栏必须放在 `#histList` **外面**：`ui_probe.mjs` 有一条断言
+         「`#histList .cfg-row` 的行数 == 后端 count」，往里塞任何非记录元素都会让它红。 -->
+    <div class="tool-row">
+      <button onclick="loadHist()" id="histRefreshBtn" title="重新读取">刷新</button>
+      <button onclick="openCompare()" id="cmpBtn" title="勾选两条记录后对比">对比选中的 2 条</button>
+      <button onclick="clearHist()" id="histClearBtn" title="清空全部历史记录（含落盘文件）">清空记录</button>
+      <span class="tool-note" id="histNote">点任意一行可还原当时的计划</span>
+    </div>
+    <div id="histList"><div class="empty">暂无记录, 先去生成一次排程</div></div>
+  </div>
+</div>
+
+<script>
+const COLORS={"灶具":"#e67e22","蒸箱":"#2980b9","烤箱":"#8e5a2b","冰箱":"#16a085","双手":"#27ae60","等待":"#cfc8bc"};
+let allRecipes=[], selected=[];
+// v3.7：历史记录（列表摘要）与"勾选对比"的 sid 集合。放在全局是因为
+// `loadHist` / `pickCmp` / `openCompare` / `clearHist` 四处都要读它。
+let HIST=[], CMP_SEL=[];
+let chatMsgs=[];
+
+// HTML 转义: 菜谱原文/菜名里可能出现 & < > " ' —— 直接拼进 innerHTML 会破坏
+// 结构(最轻是显示错乱, 最重是注入)。所有"来自数据"的字符串都必须过 esc()。
+function esc(s){
+  return String(s??'').replace(/[&<>"']/g,c=>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// 明细表的时间列: 提前准备行是负数(相对开饭的倒数), 直接显示 "-180" 会让人误解。
+function fmtT(v){
+  const n=Number(v)||0;
+  return n<0?'<span class="synth">提前</span>':String(Math.round(n*10)/10);
+}
+// 后端各处回的 `elapsed_ms` 一律是**毫秒**（`round(x*1000,1)`，见 main.py / model.py）。
+// 但排程耗时动辄五位数毫秒（实测 19005.2ms），摆在卡片里既占宽又读不出量级 ——
+// 统一转成秒、保留 1 位小数。**唯一口径**：任何地方要显示耗时都走这里，
+// 免得两处各写各的、改一处漏一处（界面铁律：同一语义只留一个真源）。
+function fmtSec(ms){
+  const n=Number(ms);
+  return Number.isFinite(n)?(n/1000).toFixed(1):'—';
+}
+
+// ---- 后端连通性 ----
+// 这个页面是"薄客户端": 菜谱、设备、档案、排程全部来自 FastAPI 后端。
+// 于是有两种打开方式必然失败:
+//   ① 双击 index.html(file://) —— 相对路径 /api/* 会解析成 file:///api/*;
+//   ② 从静态预览/静态服务器打开 —— 有 index.html 但没有后端。
+// 旧版对此没有任何失败态: loadRecipes() 的 await 直接 reject, 占位符永远停在
+// 「加载中...」, 用户无法区分"还在加载"和"已经失败"。下面统一出口 + 横幅修掉它。
+let BACKEND_DOWN=false;
+// 提示必须**可照做**：给出启动方式 + 正确地址。
+// 只写"连接失败"等于没说 —— 用户既不知道要启动什么, 也不知道该访问哪。
+// 两个版本: backendHint() 是纯文本(给 title 用), backendHintHtml() 把地址变成可点链接(给横幅用)。
+const BACKEND_ADDR='http://127.0.0.1:8137/app';
+function backendHint(){
+  if(location.protocol==='file:')
+    return '当前是以本地文件方式打开的，本页必须由后端提供服务：请先运行 start.bat，'
+         + '再打开 '+BACKEND_ADDR;
+  return '连接不上后端服务（请确认 start.bat 已启动，默认地址 '+BACKEND_ADDR+'）';
+}
+function backendHintHtml(){
+  return backendHint().replace(BACKEND_ADDR,'<a href="'+BACKEND_ADDR+'">'+BACKEND_ADDR+'</a>')
+                      .replace('start.bat','<b>start.bat</b>');
+}
+function markBackendDown(err){
+  if(BACKEND_DOWN)return;
+  BACKEND_DOWN=true;
+  const bar=document.getElementById('offlineBar');
+  if(bar){
+    const t=document.getElementById('offlineText');
+    if(t)t.innerHTML=backendHintHtml();
+    bar.classList.add('on');
+  }
+  // 还停在「加载中...」的占位换成明确结论 —— 不要让它一直转。
+  document.querySelectorAll('.list .empty').forEach(el=>{
+    if(el.textContent.trim()==='加载中...')el.textContent='后端未连接';
+  });
+  const b=document.getElementById('llmBadge');
+  if(b){b.textContent='○ 后端未连接';b.className='llm-badge off';b.title=backendHint();}
+}
+function markBackendUp(){
+  if(!BACKEND_DOWN)return;
+  BACKEND_DOWN=false;
+  const bar=document.getElementById('offlineBar');
+  // 令牌不对时横幅要讲的是另一件事，别被"后端恢复了"顺手关掉。
+  if(bar&&!AUTH_FAILED)bar.classList.remove('on');
+}
+// ---- 访问令牌（后端开启 FT_AUTH_TOKEN 时才需要）----------------------------
+// 只从 URL 的 ?token= 取一次并存起来（部署时把带令牌的链接发给评审即可），
+// 之后所有请求自动带上。**绝不写进源码** —— 源码是要给别人看的。
+// 后端没开鉴权时不校验这个头，带了也无害 ⇒ 本机演示与公网部署共用同一份前端。
+let AUTH_TOKEN='';
+try{
+  AUTH_TOKEN=new URLSearchParams(location.search).get('token')||localStorage.getItem('ft_token')||'';
+  if(AUTH_TOKEN)localStorage.setItem('ft_token',AUTH_TOKEN);
+}catch(e){}
+let AUTH_FAILED=false;
+function markAuthRequired(){
+  if(AUTH_FAILED)return;
+  AUTH_FAILED=true;
+  const bar=document.getElementById('offlineBar');
+  if(bar){
+    const t=document.getElementById('offlineText');
+    if(t)t.innerHTML='后端要求访问令牌：请在地址后加 <code>?token=你的令牌</code> 再打开'
+      + '（令牌由部署者用 <b>FT_AUTH_TOKEN</b> 设置）。';
+    bar.classList.add('on');
+  }
+  document.querySelectorAll('.list .empty').forEach(el=>{
+    if(el.textContent.trim()==='加载中...')el.textContent='需要访问令牌';
+  });
+  const b=document.getElementById('llmBadge');
+  if(b){b.textContent='○ 需要访问令牌';b.className='llm-badge off';b.title='未携带或令牌不正确';}
+}
+// 统一出口: **所有**请求都走这里。漏掉一个 fetch 就会出现"某一块永远加载中"。
+// 注意分工 —— 这里只负责"**连不上**"这一种失败(网络层 reject):
+//   · fetch reject  ⇒ 后端不可达(含 file:// 打开) ⇒ 弹横幅 + 抛错, 调用方 catch;
+//   · HTTP 4xx/5xx ⇒ 后端是**活的**, 只是这次请求有问题 ⇒ 原样返回 r, 由调用方
+//     按自己的语义处理(如 403 提示"写入已关闭")。绝不在这里把 4xx 也当成"后端挂了"。
+async function apiFetch(url,opts){
+  opts=opts||{};
+  if(AUTH_TOKEN)opts.headers=Object.assign({},opts.headers,{'X-Auth-Token':AUTH_TOKEN});
+  let r;
+  try{
+    r=await fetch(url,opts);
+  }catch(e){
+    markBackendDown(e);
+    throw new Error('后端不可达: '+url);
+  }
+  markBackendUp();
+  // 401 = "后端活着但不认你"，与"连不上"是两回事 ⇒ 走另一条提示分支。
+  // 这里**不能**调 markBackendDown —— 那会把真正的原因盖成"连不上后端"。
+  if(r.status===401)markAuthRequired();
+  return r;
+}
+function retryBackend(){
+  markBackendUp();
+  loadRecipes(); loadPresets(); refreshLlmStatus(true);
+  // 只重试"当前正开着"的视图, 免得点一次重试把几个列表都打一遍。
+  // ⚠ 这里每一项都**必须**对应一个真实存在的视图：`getElementById` 返回 null 时
+  //   `.classList` 会抛 TypeError，而它被 try/catch 吞掉后表现为"重试按钮没反应"。
+  //   （删掉「档案」站点时这里就漏改过一次。）
+  if(document.getElementById('v-recipes').classList.contains('active'))loadLib('');
+  if(document.getElementById('v-settings').classList.contains('active'))loadSettings();
+  if(document.getElementById('v-history').classList.contains('active'))loadHist();
+}
+
+function heroMove(e){
+  const h=document.getElementById('hero'); if(!h)return;
+  const r=h.getBoundingClientRect();
+  const g=document.getElementById('heroGlow');
+  g.style.left=(e.clientX-r.left)+'px';
+  g.style.top=(e.clientY-r.top)+'px';
+}
+
+function show(v,btn){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('.menu button').forEach(e=>e.classList.remove('on'));
+  btn.classList.add('on');
+  if(v==='recipes')loadLib('');
+  if(v==='settings')loadSettings();
+  if(v==='history')loadHist();
+  // 排程页在隐藏状态下量不出甘特图有没有溢出(此时 clientWidth=0), 所以
+  // 每次切回来都要在真实布局生效后重算一次"可左右滚动"提示。
+  if(v==='plan')requestAnimationFrame(updGanttHint);
+}
+
+// 对话只有右下角气泡这一个出口（原来的「AI对话」独立站点已下线）。
+// boxId/inputId 仍留参数，是为了探针能用同一函数驱动，不是为多站点准备。
+async function sendChat(boxId='chatBox2',inputId='chatInput2'){
+  const box=document.getElementById(boxId);
+  const input=document.getElementById(inputId);
+  if(!box||!input)return;
+  const text=input.value.trim(); if(!text)return;
+  input.value='';
+  // ⚠ 用户输入与模型回复都必须过 esc()：这里是 innerHTML，不是 textContent。
+  //   原实现直接把 `${text}` 拼进去 —— 发一句 `1<2 和 "x"` 就能把气泡的 DOM 结构打乱。
+  box.insertAdjacentHTML('beforeend',`<div class="msg msg-user">${esc(text)}</div>`);
+  box.insertAdjacentHTML('beforeend','<div class="msg msg-ai" id="pending">思考中...</div>');
+  box.scrollTop=box.scrollHeight;
+  chatMsgs.push({role:'user',content:text});
+  chatSave();
+  const dropPending=()=>{const p=box.querySelector('.msg-ai#pending')||document.getElementById('pending');if(p)p.remove();};
+  try{
+    const r=await apiFetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMsgs})});
+    const d=await r.json();
+    chatMsgs.push({role:'assistant',content:d.reply});
+    chatSave();
+    dropPending();
+    const cm=document.getElementById('chatModel'); if(cm)cm.textContent=d.model||'AI在线';
+    box.insertAdjacentHTML('beforeend',`<div class="msg msg-ai">${esc(d.reply)}</div>`);
+    // AI 回复命中菜库 → 加一个"加入排程"按钮，点一下就切到排程页并直接排出结果。
+    // 用 DOM 构造而不是拼 HTML 字符串：菜名会进 onclick 属性，靠字符串转义
+    // 很容易在名字带引号时把脚本拼坏（这里连转义都不需要）。
+    if(d.picked&&d.picked.length){
+      const wrap=document.createElement('div');
+      wrap.className='msg msg-ai';
+      wrap.style.cssText='border-color:#27ae60;display:flex;align-items:center;justify-content:space-between;gap:10px';
+      const label=document.createElement('span');
+      label.textContent='识别到: ';
+      const b=document.createElement('b');
+      b.textContent=d.picked.join('、');
+      label.appendChild(b);
+      const btn=document.createElement('button');
+      btn.textContent='加入排程';
+      btn.style.cssText='background:#27ae60;color:#fff;border:none;border-radius:999px;padding:6px 14px;cursor:pointer';
+      btn.onclick=()=>{btn.disabled=true;btn.textContent='✅ 已加入';scheduleNames(d.picked);};
+      wrap.appendChild(label); wrap.appendChild(btn);
+      box.appendChild(wrap);
+    }
+  }catch(e){
+    dropPending();
+    box.insertAdjacentHTML('beforeend',`<div class="msg msg-ai" style="border-color:#c0392b">${
+      BACKEND_DOWN?'无法连接后端服务：请先运行 start.bat，再访问 http://127.0.0.1:8137/app'
+                  :esc('出错了: '+e)}</div>`);
+  }
+  box.scrollTop=box.scrollHeight;
+}
+// force=true 强制打开 / false 强制关闭 / 不传则切换。
+// 主页的「和 AI 聊聊」用 force=true —— 用切换语义的话，气泡本来就开着时
+// 点它会**关掉**，与按钮文案正好相反。
+function toggleFloat(force){
+  const p=document.getElementById('floatPanel'); if(!p)return;
+  const want=force===true?'flex':force===false?'none':(p.style.display==='flex'?'none':'flex');
+  p.style.display=want;
+  if(want==='flex'){const i=document.getElementById('chatInput2'); if(i)i.focus();}
+}
+
+// ==================================================================
+// D1 对话记录持久化（v3.7）
+// ------------------------------------------------------------------
+// `/api/chat` **本来就收整个 messages 数组**，多轮上下文后端一直是通的
+// （sendChat 每次把 `chatMsgs` 全量发过去）。真实缺口是**刷新即失**：
+// `chatMsgs` 只活在内存里，页面一刷新 AI 就"失忆"，用户还得重新自我介绍一遍。
+// 这里把它存进 localStorage —— 与访问令牌同一个存储，仍然是"只在本机浏览器"。
+// ==================================================================
+const CHAT_KEY='ft_chat_msgs';
+// 限长：对话会一直长下去，而 localStorage 只有几 MB，写满之后 setItem 会抛
+// QuotaExceededError。留最近 40 条足够覆盖一轮完整的"点菜→改计划"往返。
+const CHAT_MAX=40;
+function chatSave(){
+  try{localStorage.setItem(CHAT_KEY,JSON.stringify(chatMsgs.slice(-CHAT_MAX)));}catch(e){}
+}
+function chatLoad(){
+  try{
+    const raw=localStorage.getItem(CHAT_KEY);
+    if(!raw)return [];
+    const arr=JSON.parse(raw);
+    // 只收形状对的条目：坏数据（手改过 / 旧版本格式）不能把整个页面带崩。
+    return Array.isArray(arr)?arr.filter(m=>m&&typeof m.role==='string'
+      &&typeof m.content==='string'):[];
+  }catch(e){return [];}
+}
+// 把持久化的对话重绘进气泡。**不走 sendChat** —— 那会真的再发一次请求。
+function renderChatHistory(){
+  const box=document.getElementById('chatBox2'); if(!box)return;
+  if(!chatMsgs.length)return;
+  box.innerHTML='<div class="note">（下面是上次的对话，已自动恢复）</div>'
+    +chatMsgs.map(m=>`<div class="msg ${m.role==='user'?'msg-user':'msg-ai'}">${esc(m.content)}</div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+// C1：清空对话**可撤销**（数据就在本机 localStorage 里，备份一份就行），
+// 但仍然先弹一次确认 —— 它会把几十轮上下文一次抹掉，误触代价不小。
+function askClearChat(){
+  if(!chatMsgs.length){undoToast('对话本来就是空的');return;}
+  askConfirm('清空对话',
+    '<p>将删除本机保存的 <b>'+chatMsgs.length+'</b> 条对话记录。</p>'
+    +'<p style="font-size:12px;color:var(--muted)">只清本机的聊天记录，'
+    +'不影响排程结果与菜谱。清空后 8 秒内可撤销。</p>',
+    '确认清空',true,doClearChat);
+}
+function doClearChat(){
+  const backup=chatMsgs.slice();
+  chatMsgs=[];
+  try{localStorage.removeItem(CHAT_KEY);}catch(e){}
+  const box=document.getElementById('chatBox2');
+  if(box)box.innerHTML='<div class="note">对话已清空。几个人吃、想吃什么口味，我来帮你点菜排顺序。</div>';
+  undoToast('已清空 '+backup.length+' 条对话',()=>{
+    // 撤销 = 写回内存 + 写回 localStorage + 重绘。三步缺一不可：
+    // 只写内存的话刷新就没了；只写 localStorage 的话当前页面还是空的。
+    chatMsgs=backup;
+    chatSave();
+    renderChatHistory();
+    undoToast('已恢复 '+backup.length+' 条对话');
+  });
+}
+
+// ==================================================================
+// D3 自然语言改菜单（v3.7）
+// ------------------------------------------------------------------
+// 刻意**复用对话里的那句话**，而不是再加一个输入框：用户本来就是在气泡里
+// 说"把汤挪到最后"的，让他再抄一遍是最没道理的交互。
+// 后端 `/api/revise_plan` 只负责把一句话翻成一份新的**菜名列表**（增删 + 顺序），
+// 排程仍走 `/schedule` —— 这样"改计划"永远不会绕过求解器，也就不可能产出
+// 违反硬约束的计划。
+// ==================================================================
+async function reviseFromChat(){
+  const last=[...chatMsgs].reverse().find(m=>m.role==='user');
+  if(!last){alert('先在对话框里说一句，比如「把汤挪到最后」或「去掉红烧肉」。');return;}
+  if(!selected.length){alert('左边还没选菜。先选几道，再说要改什么。');return;}
+  const box=document.getElementById('chatBox2');
+  let d;
+  try{
+    const r=await apiFetch('/api/revise_plan',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:last.content,dishes:selected.map(s=>s.name)})});
+    d=await r.json();
+  }catch(e){
+    alert('无法连接后端服务：请先运行 start.bat');
+    return;
+  }
+  if(!d.ok){
+    // ⚠ 如实说"没听懂"，绝不悄悄按原样重排 —— 那会让用户以为改动生效了。
+    if(box)box.insertAdjacentHTML('beforeend',
+      `<div class="msg msg-ai" style="border-color:#c0392b">${esc(d.notice||'没听懂这句想改什么。')}</div>`);
+    if(box)box.scrollTop=box.scrollHeight;
+    return;
+  }
+  // 按后端给的新顺序重建 selected。菜名 → 已选对象优先，其次菜库元数据。
+  const bySel={}; selected.forEach(s=>{bySel[s.name]=s;});
+  const byMeta={}; META.forEach(m=>{byMeta[m.name]=m;});
+  const next=[];
+  d.order.forEach(n=>{
+    const it=bySel[n]||byMeta[n];
+    if(it&&it.name)next.push(it);
+  });
+  if(!next.length){alert('改完之后一道菜都不剩了，已保持原样。');return;}
+  selected=next;
+  updSel();
+  const parts=[];
+  if(d.remove&&d.remove.length)parts.push('去掉 '+d.remove.join('、'));
+  if(d.add&&d.add.length)parts.push('加上 '+d.add.join('、'));
+  const changed=parts.length?('（'+parts.join('，')+'）'):'（顺序已调整）';
+  if(box)box.insertAdjacentHTML('beforeend',
+    `<div class="msg msg-ai" style="border-color:#27ae60">✅ 菜单已更新${esc(changed)}：${esc(d.order.join(' → '))}。正在重新排程…</div>`);
+  if(box)box.scrollTop=box.scrollHeight;
+  chatMsgs.push({role:'assistant',content:'菜单已更新'+(changed||'')+'：'+d.order.join(' → ')});
+  chatSave();
+  await run();
+}
+
+// ---- 排程视图 ----
+let META=[], catFilter='全部';
+const CATS=['全部','灶眼快炒','蒸箱料理','烤箱烘焙','汤羹炖品','主食套餐'];
+async function loadRecipes(){
+  if(!META.length){
+    try{
+      const d=await(await apiFetch('/api/recipes_meta')).json();
+      META=d.items;
+    }catch(e){
+      // 关键: 不要留在初始的「加载中...」。后端不可达是一个**结论**, 不是一个中间态;
+      // 让占位符一直转下去, 用户只会以为"还在加载"。(横幅由 markBackendDown 弹出)
+      document.getElementById('recipeList').innerHTML=
+        '<div class="empty">'+(BACKEND_DOWN?'后端未连接':'加载失败')+'</div>';
+      return;
+    }
+  }
+  // 渲染分类 chips
+  const cnt={}; META.forEach(m=>cnt[m.category]=(cnt[m.category]||0)+1);
+  document.getElementById('catChips').innerHTML=CATS.map(c=>{
+    const n=c==='全部'?META.length:(cnt[c]||0);
+    return `<span class="chip ${catFilter===c?'on':''}" onclick="setCat('${c}')">${c} ${n}</span>`;
+  }).join('');
+  const q=document.getElementById('search').value;
+  allRecipes=META.filter(m=>(catFilter==='全部'||m.category===catFilter)&&(!q||m.name.includes(q)))
+    .map(m=>({id:m.name,name:m.name,method:'',category:m.category,steps:m.steps,minutes:m.minutes}));
+  // 只渲染前 80 行（长列表会拖慢首屏），但**必须把"截断了"这件事说出来** ——
+  // 否则 chip 写着「全部 100」而列表只有 80 行，用户会以为剩下的 20 道丢了。
+  const shown=allRecipes.slice(0,80);
+  document.getElementById('recipeList').innerHTML=(shown.map(x=>
+    `<div class="item ${selected.some(s=>s.id===x.id)?'sel':''}" data-name="${x.name}" onclick="toggle('${x.id}')">
+      <span class="dot"></span><span>${x.name}</span>
+      <span class="meta"><span class="cat">${x.category.replace('料理','').replace('烘焙','烤')}</span> ${x.steps}步·${x.minutes}分</span></div>`).join('')
+    +(allRecipes.length>shown.length
+        ?`<div class="empty">仅显示前 ${shown.length} 条 / 共 ${allRecipes.length} 条 · 用搜索或分类缩小范围</div>`
+        :''))||'<div class="empty">无结果</div>';
+}
+function setCat(c){catFilter=c;loadRecipes();}
+function clearSel(){selected=[];loadRecipes();updSel();}
+function updSel(){
+  document.getElementById('selCount').textContent=selected.length+'道';
+  document.getElementById('selPills').innerHTML=selected.length?selected.map(s=>`<span class="pill">${s.name}</span>`).join(''):'<span class="empty">未选菜</span>';
+  // 「已选」是全站唯一的选择状态真源 ⇒ 插单候选池必须跟着它变，否则会把
+  // 已经在计划里的菜再列一遍、插第二次。放在这里而不是各调用点，是防止
+  // 以后新增一个改 selected 的地方时漏掉（少排一步的旧账）。
+  fillInsertPool();
+}
+function toggle(id){
+  const r=allRecipes.find(x=>x.id===id)||META.find(x=>x.name===id);
+  if(!r)return;
+  if(selected.some(s=>s.id===id))selected=selected.filter(s=>s.id!==id);
+  else{if(selected.length>=5){alert('最多选5道');return;}selected.push({...r,id});}
+  loadRecipes();updSel();
+}
+// 「AI排」不再自己调 /api/agent_plan，而是把这句需求**交给右下角的 AI 对话**
+// （用户 2026-10-08 要求：输入后自动打开对话窗口并发送）。
+//
+// 为什么值得换掉原来那条直连链路：
+//   · /api/agent_plan 只认"菜名"，认不出来就弹一句"没识别到菜, 换个说法" ——
+//     用户不知道该怎么换，也没有追问的余地；
+//   · /api/chat 能追问、能解释为什么这么配，还会附一个「加入排程」按钮。
+//   统一到一个入口后，"解释"和"最终排出来的计划"出自同一段上下文。
+//   /api/agent_plan 端点本身保留（后端契约没动，test_core.py 仍守着它）。
+function agentPlan(){
+  const el=document.getElementById('agentText');
+  const text=(el&&el.value||'').trim();
+  if(!text){alert('先写一句想怎么吃，例如「两荤一素，快点」');return;}
+  el.value='';                       // 交出去之后清空，避免重复发同一句
+  // 顺序不能反：toggleFloat(true) 内部会 focus 输入框，先填值再开窗会被 focus 逻辑
+  // 之外的任何重绘擦掉。开窗 → 填值 → 发送。
+  toggleFloat(true);
+  const inp=document.getElementById('chatInput2');
+  if(!inp){alert('对话窗口没找到（页面结构变了？）');return;}
+  inp.value=text;
+  sendChat('chatBox2','chatInput2');   // 自动发送：按钮叫「AI排」，只填不发会让人以为没生效
+}
+async function scheduleNames(names){
+  // id 必须用菜名: toggle() / loadRecipes() 都是按 s.id===x.id(菜名) 判断高亮的,
+  // 旧实现拿数组下标当 id, 列表行永远不会高亮; 而且这里从没调过 updSel(),
+  // 「已选」区域会一直停在上一轮的菜(或"未选菜") —— 排程换了一批菜、界面却没变。
+  selected = names.map(n=>({id:n,name:n}));
+  show('plan', document.querySelectorAll('.menu button')[1]);
+  loadRecipes();updSel();
+  await run();
+}
+async function run(){
+  if(!selected.length){alert('先选菜');return;}
+  const body={recipes:selected.map(s=>({name:s.name,ingredients:'',steps:''}))};
+  try{
+    const r=await apiFetch('/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){alert('排程失败: '+r.status);return;}
+    render(await r.json());
+  }catch(e){
+    alert('无法连接后端服务，请先运行 start.bat 再访问 http://127.0.0.1:8137/app');
+  }
+}
+function onEventChange(){
+  // 切换事件类型时清掉上一次的重排结果摘要。否则会留着"插单「X」…"这种与当前
+  // 选择不符的旧文案, 看起来像已经按新事件重排过了。
+  // (这个函数以前只有调用点、没有定义 —— 每次改下拉都抛 ReferenceError。)
+  document.getElementById('resched').textContent='';
+  // 只有「插单」需要挑菜。故障档还留着那个下拉，会让人以为故障也能指定是哪台设备。
+  const p=document.getElementById('insertPick');
+  if(p)p.style.display=(document.getElementById('eventType').value==='insert')?'':'none';
+}
+// 「恢复默认」要退回的档位。**显式常量**，不去读 `sel.options[0]`：
+// 读 DOM 的话，将来有人调整选项顺序，"默认档"会**静默**跟着变，
+// 而文案、探针、后端对"默认"的约定并不会一起变。
+const EVENT_DEFAULT='insert';
+function resetEvent(){
+  const ev=document.getElementById('eventType');
+  const pick=document.getElementById('insertPick');
+  const out=document.getElementById('resched');
+  if(ev)ev.value=EVENT_DEFAULT;
+  if(pick)pick.value='';
+  onEventChange();     // 清掉上一次的结果摘要 + 按档位显隐 #insertPick
+  // **刻意不自动重排**：设备故障是按请求生效的（`/reschedule` 的 body 字段），
+  // 不会粘在本进程里，所以这里没有需要清掉的服务端状态；而自动重排要跑一次
+  // 完整闭环（5~20s），用户点"恢复默认"不会预期按钮转二十秒。
+  // 计划本身还是上一次重排的结果 —— 这句必须写清楚，否则用户会以为计划也回去了。
+  if(out)out.textContent='已恢复默认（事件：插单(加一道菜)）。'
+    +'计划仍是上一次重排的结果，要回到无扰动的计划请点「生成排程」。';
+}
+// 插单候选池 = 菜库全部菜名 − 已选。拉一次缓存住；每次重排后再按当前 selected 重过滤。
+let INSERT_POOL=null;
+async function loadInsertPool(){
+  try{
+    INSERT_POOL=((await(await apiFetch('/api/recipe_names')).json()).names)||[];
+  }catch(e){ INSERT_POOL=INSERT_POOL||[]; }  // 拉不到就沿用上一次的池子，不至于清空
+  fillInsertPool();
+}
+function fillInsertPool(){
+  const sel=document.getElementById('insertPick');
+  if(!sel)return;
+  const cur=sel.value;
+  const pool=(INSERT_POOL||[]).filter(n=>!selected.some(s=>s.name===n));
+  sel.innerHTML='<option value="">随机挑一道没选的菜</option>'
+    +pool.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  // 已经插进计划的那道菜要从候选里消失；若它正是当前选中项，退回「随机」。
+  // 不处理的话再点一次「应用重排」会把同一道菜插第二遍。
+  sel.value=pool.indexOf(cur)>=0?cur:'';
+}
+// 重排结果摘要。后端其实还回了 stance / pareto / notice 三块相当值钱的信息
+// （重排姿态、两条**可判定**的不劣化保证、变更明细），原实现只取了
+// locked/perturbed/conflict_count —— 用户看不到"这次重排到底靠不靠谱"。
+// ⚠ 这里全部走 innerHTML，凡是来自后端/用户的字符串都必须过 esc()。
+function reschedSummary(desc,d){
+  const k=d.kpi||{};
+  let s=`<b>${esc(desc)}</b>：锁定${d.locked||0}步 · 挪动${d.perturbed||0}步 · `+
+        `冲突${k.conflict_count??'-'} · 耗时${fmtSec(d.elapsed_ms)}秒`;
+  const st=d.stance;
+  if(st&&st.name){
+    // by_llm=false ⇒ 姿态是规则兜底出来的（模型没参与）。不说清楚会被当成模型判断。
+    s+=`<br>姿态：<b>${esc(st.desc||st.name)}</b>${st.by_llm?'（模型裁定）':'（规则兜底）'}`;
+    if(st.reason)s+=` — ${esc(st.reason)}`;
+  }
+  const pa=d.pareto&&d.pareto['保证'];
+  if(pa){
+    const ok=v=>v?'<span style="color:#27ae60">✓</span>':'<span style="color:#c0392b">✗</span>';
+    s+=`<br>保证：已完成步骤零变动 ${ok(pa['已完成步骤零变动'])} · `+
+       `不劣于串行基线 ${ok(pa['不劣于串行基线'])}`;
+  }
+  const n=d.notice;
+  if(n&&n['新总时长']!=null)
+    s+=`<br>新总时长 ${n['新总时长']} 分 · 调整步骤 ${n['调整步骤数']??0} 步`;
+  return s;
+}
+async function triggerEvent(){
+  if(!selected.length){alert('先生成一次排程');return;}
+  const out=document.getElementById('resched');
+  const btn=document.getElementById('reschedBtn');
+  const ev=document.getElementById('eventType').value;
+  const base={recipes:selected.map(s=>({name:s.name,ingredients:'',steps:''})),completed:[]};
+  let desc='';
+  try{
+    if(ev==='insert'){
+      const sel=document.getElementById('insertPick');
+      const want=(sel&&sel.value)||'';
+      let pick=want;
+      if(!pick){
+        const pool=(INSERT_POOL||[]).filter(n=>!selected.some(s=>s.name===n));
+        if(!pool.length){out.textContent='没有可插的菜了：菜库里的菜都已经在计划里。';return;}
+        pick=pool[Math.floor(Math.random()*pool.length)];
+      }
+      base.extra={name:pick,ingredients:'',steps:''};
+      desc=`插单「${pick}」${want?'':'（随机）'}`;
+    } else {
+      const dev={stove:'灶具',steamer:'蒸箱',oven:'烤箱'}[ev];
+      base.failed_device=dev; desc=`设备故障: ${dev}不可用`;
+    }
+    // 重排要跑一次完整闭环（实测 5~20s）。不置忙态的话用户会以为没点上、反复点，
+    // 后端被同一份输入打爆，而且后回来的响应会把先回来的结果覆盖掉。
+    if(btn){btn.dataset.txt=btn.innerHTML;btn.disabled=true;btn.textContent='重排中…';}
+    out.textContent='重排中，请稍候（要跑一次完整闭环，通常 5~20 秒）…';
+    const r=await apiFetch('/reschedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(base)});
+    const d=await r.json().catch(()=>({}));
+    // 失败有两条路径，**都要判**：业务失败是 200 + {"error":...}（/reschedule 的历史契约），
+    // 路由/校验失败是 4xx/5xx 且响应体形状不定。只判 d.error 的话 4xx 会掉进"成功"分支，
+    // 界面上照旧渲染一个空计划，看起来像"重排成功但什么都没变"。
+    if(!r.ok){out.textContent=`${desc}：重排失败（HTTP ${r.status}）`;return;}
+    if(d&&d.error){out.textContent=`${desc}：重排失败 — ${d.error}`;return;}
+    render(d);
+    // 插单成功 ⇒ 「已选」必须跟着变。原实现只重画甘特图，左侧「已选」和顶部
+    // 「N道」还停在旧集合 —— 同一屏上两个数字互相打架。
+    // ⚠ 这里**不套 5 道上限**：上限是"手动点选"的 UX 约束，而重排已经真的排了
+    //   第 6 道菜，界面必须显示真实集合，否则又是不一致。
+    if(ev==='insert'&&base.extra&&!selected.some(s=>s.name===base.extra.name)){
+      selected=selected.concat([{id:base.extra.name,name:base.extra.name}]);
+      updSel(); loadRecipes(); fillInsertPool();
+    }
+    out.innerHTML=reschedSummary(desc,d);
+  }catch(e){
+    out.textContent='重排失败：无法连接后端服务';
+  }finally{
+    // 恢复按钮必须放 finally：上面三条 return（无菜可插 / 非 2xx / d.error）
+    // 都会跳过函数尾部，漏掉一个按钮就永远停在"重排中…"且 disabled。
+    if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.txt||'应用重排';}
+  }
+}
+function colorOf(t){for(const k in COLORS)if(t.unit_id.startsWith(k))return COLORS[k];return COLORS["等待"];}
+// 时间轴画布宽度 = 110px(泳道标签) + 计划时长 × 每分钟像素。
+// 34px/分钟 ≈ 5 分钟刻度间隔 170px, 足够放刻度文字; 上限 1200px 免得
+// 长计划(>35 分钟)画成一条几千像素的带子。不足容器宽时按容器宽铺满
+// (CSS min-width:max(100%, Npx)), 超出就出现左右横向滚动条。
+const GANTT_PX_PER_MIN=34, GANTT_MAX_CANVAS=1200;
+let LAST_PLAN=null,LAST_RESP=null, PLAY_TIMER=null, CUR_T=0, MAX_T=1, FIRED=new Set();
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.15;o.start();o.stop(c.currentTime+.3);setTimeout(()=>c.close(),400);}catch(e){}}
+// 顶栏(sticky 胶囊)到底占掉多少纵向空间 —— 排程页要靠它算 #v-plan 的高度。
+// 用 offsetHeight + computed top, 而不是 getBoundingClientRect().bottom:
+// 后者在别的视图滚动过之后会偏移, 用 offsetHeight 与滚动位置无关。
+function fitChrome(){
+  const nav=document.querySelector('.nav'); if(!nav)return;
+  const top=parseFloat(getComputedStyle(nav).top)||0;
+  const v=Math.ceil(nav.offsetHeight+top)+'px';
+  const de=document.documentElement;
+  // 值没变就不写：ResizeObserver 在过渡期间会连续回调很多次，
+  // 每次 setProperty 都会触发一次样式重算，白白浪费帧。
+  if(de.style.getPropertyValue('--chrome')!==v)de.style.setProperty('--chrome',v);
+}
+function updGanttHint(){
+  const g=document.getElementById('gantt'),h=document.getElementById('ganttHint');
+  if(!g||!h)return;
+  // 视图隐藏时 clientWidth 为 0, 量不出是否溢出, 先藏起来等 show('plan') 再算
+  if(!g.clientWidth){h.style.visibility='hidden';return;}
+  h.style.visibility=(g.scrollWidth>g.clientWidth+1)?'visible':'hidden';
+}
+// ---- 开饭时间 → 墙上时钟锚点 ----
+// 排程结果是**相对分钟**（t=0 = 第一个占用资源的任务）。单看 "t=17 分" 用户没法
+// 对上自己的时间表，于是「开饭时间」这个输入框的意义就是提供锚点：
+//     开始下厨 = 开饭时间 − 总时长
+// ⚠ 它**不是约束**：不会反过来逼求解器压缩总时长（那会让 Γ 口径被动摇）。
+//   真来不及就如实说"来不及"，而不是偷偷改计划。
+// ⚠ 提前准备步骤（start_min < 0）是前一天/今早完成的，不参与这个换算。
+function dinnerAnchor(){
+  const el=document.getElementById('dinnerTime');
+  const m=/^(\d{1,2}):(\d{2})$/.exec(((el&&el.value)||'').trim());
+  return m?(+m[1])*60+(+m[2]):null;          // 当天第几分钟
+}
+function fmtClock(mins){
+  let m=Math.round(mins);
+  const day=Math.floor(m/1440);
+  m=((m%1440)+1440)%1440;
+  const s=String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  return day<0?('前一天 '+s):day>0?('第 '+(day+1)+'天 '+s):s;
+}
+// 把相对分钟翻成墙上时钟；没有锚点（没填 / 没排程）时返回 null，调用方自行降级。
+function clockOf(minutes){
+  const a=dinnerAnchor();
+  return a===null?null:fmtClock(a+minutes);
+}
+function updDinnerHint(){
+  const box=document.getElementById('dinnerHint'); if(!box)return;
+  const a=dinnerAnchor();
+  if(a===null){box.textContent='';box.title='';return;}
+  const span=LAST_PLAN&&Number(LAST_PLAN.makespan_min)||0;
+  if(!span){box.textContent='';box.title='按这个时间开饭，生成排程后显示「几点开始下厨」。';return;}
+  const start=a-span, late=start<0;
+  // ⚠ 正文只取**最短说法**：这一行必须只占一行（多一行就把「生成排程」推进悬浮球，
+  //   真 Edge 排版探针 1366×768 实测重叠 17px）。完整解释放 title（悬停可见），
+  //   样式里另有 ellipsis 兜住任意长度，保证行高恒定。
+  box.textContent=late?'⚠ 来不及':(fmtClock(start)+' 下厨');
+  box.style.color=late?'#c0392b':'';
+  box.title='按 '+fmtClock(a)+' 开饭：需 '+fmtClock(start)+' 开始下厨（总时长 '+span+' 分）'
+    +(late?'。⚠ 这个开饭时间来不及 —— 按上面的计划，需要 '+fmtClock(start)+' 就开火。':'');
+}
+function render(d){
+  // CUR_SID: 执行态是按 sid 归集的 —— 没有它(如重排产生的计划没落库)就打不了点。
+  LAST_RESP=d; LAST_PLAN=d.plan; CUR_SID=d.sid||''; const p=d.plan,k=d.kpi||{};
+  // 防御: /api/agent_plan 的极端兜底会返回 plan:null; 而它的 plan 字段本身是
+  // 纯官方 schema(没有 tasks)。旧实现在 p.tasks.filter 上直接抛 TypeError,
+  // 表现为"点了没反应 + 控制台报错"。没有可画的任务就明确说明。
+  if(!p||!p.tasks){
+    document.getElementById('gantt').innerHTML='<div class="empty">没有可用的排程结果</div>';
+    document.getElementById('stats').innerHTML='';
+    document.getElementById('tasks').innerHTML='';
+    document.getElementById('prepBanner').innerHTML='';
+    document.getElementById('taskCount').textContent='';
+    updGanttHint();
+    updDinnerHint();
+    updPlanTools(null);
+    showHints(null);
+    return;
+  }
+  const gapOk=p.finish_gap_min<=5?'<span style="color:#27ae60">✓</span>':'';
+  document.getElementById('stats').innerHTML=
+    `<div class="stat"><b>${p.makespan_min}</b><span>总时长(分)</span></div>
+     <div class="stat"><b>${p.finish_gap_min}${gapOk}</b><span>出锅差(分)</span></div>
+     <div class="stat"><b>${k.device_utilization??'-'}%</b><span>设备利用率</span></div>
+     <div class="stat"><b style="color:${k.conflict_count===0?'#27ae60':'#c0392b'}">${k.conflict_count??'-'}</b><span>冲突</span></div>
+     <div class="stat"><b>${fmtSec(d.elapsed_ms)}</b><span>耗时(秒)</span></div>`;
+  document.getElementById('legend').innerHTML=Object.entries(COLORS).map(([k,v])=>`<span><i style="background:${v}"></i>${k}</span>`).join('');
+  stopPlay(); CUR_T=0; FIRED=new Set();
+  MAX_T=p.makespan_min||1;
+  document.getElementById('tSlider').max=MAX_T;
+  syncPlaybar(0);   // 重排后滑块/填充/读数一起归零(旧实现只改了 max, label 停在上一轮)
+  const max=MAX_T;
+  const prep=p.tasks.filter(t=>t.start_min<0);
+  const cook=p.tasks.filter(t=>t.start_min>=0);
+  // _idx 是"这条任务在 p.tasks 里的下标", 明细行与甘特条都靠它回调 openStepDetail。
+  // 不能用 task_id 拼进 onclick: 菜名里带引号/空格时会把 JS 串拼坏。
+  // ⚠ 必须**在画甘特图之前**赋值 —— renderSwim() 就是在这里面被调用的,
+  //   放到下面去会让甘特条的 data-idx 渲染成空串, 点开详情静默失效
+  //   （jsdom 探针实测抓到过: 明细行能开、甘特条开不了）。
+  p.tasks.forEach((t,i)=>{t._idx=i;});
+  // 提前准备提示挪到 #gantt 外面: #gantt 现在是横向滚动容器, 提示条放在里面
+  // 会跟着时间轴一起被推走。
+  document.getElementById('prepBanner').innerHTML=prep.length?`<div class="note" style="margin-bottom:8px">📦 提前准备(前一天/今早完成, 不占烹饪时间): ${prep.map(t=>`${t.dish}#${t.step_id} ${t.duration_min}分`).join('；')}</div>`:'';
+  // nowline 与泳道条都放在 .gantt-inner 里, 它的宽度就是可滚内容宽度 ——
+  // seekT() 用 nl.parentElement.clientWidth 换算像素位置, 必须和泳道轨道同基准。
+  const canvasW=Math.round(Math.min(GANTT_MAX_CANVAS, 110+MAX_T*GANTT_PX_PER_MIN));
+  document.getElementById('gantt').innerHTML=
+    `<div class="gantt-inner" style="min-width:max(100%,${canvasW}px)">
+       <div class="nowline" id="nowline" data-t="t=0" style="left:0%;top:0;bottom:0;position:absolute"></div>
+       ${renderSwim(cook)}
+     </div>`;
+  document.getElementById('gantt').scrollLeft=0;
+  document.getElementById('taskCount').textContent=p.tasks.length+'步';
+  // 明细表补「操作步骤」列 —— 这一步到底要干什么, 以前只能去菜谱库按步骤号自己比。
+  document.getElementById('tasks').innerHTML=
+    '<table><thead><tr><th>开始</th><th>结束</th><th>资源</th><th>菜/步</th><th>操作步骤</th><th>值守</th></tr></thead><tbody>'+
+    // data-tid: paintExec() 靠它把"已完成/已延迟"标回对应行。
+    // ⚠ 不能用下标 i —— 重排后任务顺序会变, 下标对不上。
+    p.tasks.map((t,i)=>`<tr onclick="openStepDetail(${i})" data-tid="${esc(t.task_id||'')}">
+      <td>${fmtT(t.start_min)}</td><td>${fmtT(t.end_min)}</td>
+      <td>${esc(t.unit_id||'-')}</td>
+      <td>${t.dish?esc(t.dish)+'#'+t.step_id:'<span class="synth">预热共享</span>'}</td>
+      <td class="rawcell" title="${esc(t.raw_text||'')}">${esc(t.raw_text||'-')}</td>
+      <td>${t.unattended?'无人':'人工'}</td></tr>`).join('')+'</tbody></table>';
+  // 通知带上墙上时钟：只写 "t=17 分" 用户得自己拿开饭时间倒推，等于没给。
+  // 没有锚点（没填开饭时间）时退回纯相对时间，不留空括号。
+  document.getElementById('notes').innerHTML=(p.notifications||[]).slice(0,15).map(n=>{
+    const c=clockOf(n.at_min);
+    return `<div class="note">⏱ t=${n.at_min}分${c?'（'+c+'）':''} · ${n.text}</div>`;
+  }).join('')||'<div class="empty">无</div>';
+  updGanttHint();
+  updDinnerHint();
+  updPlanTools(d);
+  showHints(d);
+  bindDrag();
+  paintExec();
+  // 拉一次执行态, 让"这一步我做过没"在重排/重新渲染后还能看见。
+  // ⚠ 不 await: 画甘特图不该等一次网络往返; 回来了由 paintExec 自己刷。
+  loadExec(CUR_SID);
+  // 每次排程后刷一次模型状态: 熔断可能刚被触发或刚解除, 徽标要跟着变。
+  refreshLlmStatus();
+  maybeNotifyLlmDegrade();
+}
+let GANTT_VIEW='device';
+// ==================================================================
+// v3.7 计划工具：为什么这样排 / 采购清单 / 导出 / 不可行建议
+// ------------------------------------------------------------------
+// ⚠ 与「排程诊断面板」的关系：2026-10-08 用户要求把**常驻面板**删掉（它一直占着
+//   列宽），后端 `insight` 保留为只读旁路。这里的「为什么这样排」是**按需弹层** ——
+//   不点不开、不占任何布局，与"删掉常驻面板"的要求不冲突。
+// ⚠ 工具栏按钮**一律不用 `disabled`**：禁用态下点它"什么都没发生"，
+//   与用户这次要查的"操作没反应"是同一类毛病。改成"点了就告诉你为什么不行"。
+// ==================================================================
+
+// ---- 通用信息弹层（复用 .step-modal 的遮罩/卡片）----
+function openInfo(title,html){
+  const t=document.getElementById('infoTitle'),b=document.getElementById('infoBody');
+  if(!t||!b)return;
+  t.textContent=title; b.innerHTML=html;
+  document.getElementById('infoModal').classList.add('on');
+}
+function closeInfo(){
+  const m=document.getElementById('infoModal');
+  if(m)m.classList.remove('on');
+  // 点「取消」或点遮罩关掉弹层时，把**待执行**的确认回调丢掉。
+  // 不清的话它会一直挂着，等下一次 `runConfirm()`（另一次确认的「确认」按钮）
+  // 被误触发 —— 用户点的是"清空对话"，实际执行的却是上一次的"删除菜谱"。
+  CONFIRM_FN=null;
+}
+
+// ==================================================================
+// C1 撤销 + 二次确认（v3.8）
+// ------------------------------------------------------------------
+// 危险操作要有两条腿：**事前确认**（说清后果）与**事后撤销**（点错了能回来）。
+// 只有确认没有撤销 ⇒ 点快了只能认栽；只有撤销没有确认 ⇒ 容易误触。
+//
+// 分工不是随便定的，按"这个操作**能不能真的回退**"来分：
+//   · 能回退（删菜谱 / 恢复默认厨房 / 清空对话 / 清空令牌）⇒ 给**撤销条**，
+//     不再叠一层确认 —— 撤销本来就更强，再加确认只是多一次点击。
+//   · 回不去（清空历史：后端没有"写回"端点，删了落盘文件就真没了）
+//     ⇒ 既保留**弹层确认**，又用**延迟提交**换出 8 秒撤销窗口。
+//
+// ⚠ 撤销条**不能进文档流**：排程页高度是三列 flex 算出来的，插流内元素会把
+//   甘特图挤变形（与 .llm-toast 同一条纪律，见 CSS 注释）。
+// ⚠ 撤销回调**只保留最近一次**（新操作覆盖旧的）。多个撤销条叠在一起，
+//   用户根本不知道该撤销哪一个 —— 这是有意的取舍，不是漏了队列。
+// ==================================================================
+let UNDO_FN=null, UNDO_TIMER=null;
+function undoToast(msg,fn,secs){
+  const el=document.getElementById('undoBar'); if(!el)return;
+  UNDO_FN=fn||null;
+  // 没有回调 = 纯提示（比如"已撤销：菜回来了"），这时不渲染「撤销」按钮 ——
+  // 渲染了却点不动，比没有更糟。
+  el.innerHTML=`<span class="ub-msg">${esc(msg)}</span>`
+    +(fn?`<button class="ub-btn" id="undoBtn" onclick="doUndo()" title="撤销刚才这一步">撤销</button>`:'')
+    +`<span class="x" onclick="hideUndo()" title="关闭">✕</span>`;
+  el.classList.add('on');
+  clearTimeout(UNDO_TIMER);
+  // 8 秒：短了用户来不及反应，长了会一直占着屏幕。纯提示给 4 秒就够。
+  UNDO_TIMER=setTimeout(hideUndo,(secs||(fn?8:4))*1000);
+}
+function hideUndo(){
+  clearTimeout(UNDO_TIMER); UNDO_TIMER=null; UNDO_FN=null;
+  const el=document.getElementById('undoBar');
+  if(el){el.classList.remove('on'); el.innerHTML='';}
+}
+function doUndo(){
+  const f=UNDO_FN;
+  // **先收条再执行**：撤销动作自己也会弹一条提示，不收的话新旧两条会打架。
+  hideUndo();
+  // 撤销失败（后端挂了）不该把整个页面带崩 —— 各撤销函数自己会报错。
+  if(f)try{f();}catch(e){}
+}
+// 二次确认。**刻意不用 `window.confirm`**：样式不可控、会被浏览器拦，
+// 而且 jsdom（两个 UI 探针）里它是 not implemented —— 探针只能靠打桩成
+// 恒真来绕开，等于"确认"这一步在测试里从来没被真正验证过。
+// 这里复用 `#infoModal`，回调放模块变量、由「确认」按钮触发，可被探针真点。
+let CONFIRM_FN=null;
+function askConfirm(title,body,okLabel,danger,fn){
+  CONFIRM_FN=fn||null;
+  openInfo(title,body+`<div class="tool-row" style="margin-top:12px">`
+    +`<button id="confirmOkBtn" onclick="runConfirm()"${danger?' style="color:var(--bad)"':''}>${esc(okLabel||'确认')}</button>`
+    +`<button onclick="closeInfo()">取消</button></div>`);
+}
+function runConfirm(){
+  // 先取出再关弹层 —— `closeInfo()` 会把 `CONFIRM_FN` 清成 null。
+  const f=CONFIRM_FN; CONFIRM_FN=null;
+  closeInfo();
+  if(f)f();
+}
+
+// ---- 工具栏状态 ----
+function updPlanTools(d){
+  const has=!!(d&&d.plan&&d.plan.tasks);
+  const note=document.getElementById('planToolNote');
+  if(note)note.textContent=has
+    ?`${d.plan.tasks.length} 步 · 可导出或看诊断`
+    :'生成排程后可导出 / 看诊断';
+}
+
+// ---- D2 为什么这样排 ----
+function openWhy(){
+  const ins=LAST_RESP&&LAST_RESP.insight;
+  if(!ins){
+    openInfo('为什么这样排',
+      '<div class="empty">还没有排程结果。先点「生成排程」。</div>');
+    return;
+  }
+  if(ins.error){
+    openInfo('为什么这样排',
+      `<div class="empty">诊断不可用：${esc(ins.error)}</div>`);
+    return;
+  }
+  const cp=ins.critical_path||{};
+  const ids=cp.task_ids||[];
+  const chain=ids.length
+    ? ids.map(id=>`<span class="why-node">${esc(id)}</span>`).join('→')
+    : '<span class="empty">—</span>';
+  const risks=(ins.risks||[]).map(r=>`<div class="why-risk ${r.level==='high'?'high':'mid'}">
+      <span class="tag">${r.level==='high'?'红':'提示'}</span>
+      <span>${esc(r.message||'')}</span></div>`).join('')
+    || '<div class="empty">无风险项</div>';
+  openInfo('为什么这样排',`
+    <p style="margin:0 0 4px">${esc(ins.summary||'')}</p>
+    <h3 style="font-size:13px;margin:14px 0 6px">关键路径
+      <span class="badge">${ids.length} 步 / ${cp.span_min==null?'-':cp.span_min} 分</span></h3>
+    <div class="why-chain">${chain}</div>
+    <p style="font-size:11px;color:var(--muted);margin:6px 0 0">口径：${esc(cp.method||'-')} · ${esc(cp.note||'')}</p>
+    <h3 style="font-size:13px;margin:16px 0 6px">风险提示
+      <span class="badge">红 ${ins.high||0} / 提示 ${ins.mid||0}</span></h3>
+    ${risks}
+    <p style="font-size:11px;color:var(--muted);margin-top:12px">
+      关键路径回答"哪条链一延误，出餐就晚多久"；它只用来读，不参与任何优化决策。</p>`);
+}
+
+// ---- A4 采购清单 ----
+// 数据源是菜谱详情的 `ingredients:[{name,amount}]`（官方 100 道自带「食材清单」列）。
+// ⚠ 归并只按**食材名**去重，用量分档并列 —— 不做单位换算（"8个" + "200克" 无法相加，
+//   硬凑成"8个200克"比不合并更误导）。
+let SHOP_ROWS=[];
+async function openShopping(){
+  if(!selected.length){
+    openInfo('采购清单','<div class="empty">先在左边「① 选择菜品」里选几道菜。</div>');
+    return;
+  }
+  openInfo('采购清单','<div class="empty">正在汇总…</div>');
+  const fail=[];
+  const rows=[];
+  for(const s of selected){
+    try{
+      const r=await apiFetch('/api/recipe_detail?id='+encodeURIComponent(s.id));
+      if(!r.ok){fail.push(s.name);continue;}
+      const d=await r.json();
+      (d.ingredients||[]).forEach(i=>{
+        if(i&&i.name)rows.push({dish:d.name||s.name,name:i.name,amount:i.amount||''});
+      });
+    }catch(e){fail.push(s.name);}
+  }
+  SHOP_ROWS=rows;
+  if(!rows.length){
+    openInfo('采购清单','<div class="empty">这几道菜的食材清单是空的'
+      +(fail.length?`（读取失败：${esc(fail.join('、'))}）`:'')+'。</div>');
+    return;
+  }
+  const by=new Map();
+  rows.forEach(r=>{
+    if(!by.has(r.name))by.set(r.name,{name:r.name,amounts:[],dishes:[]});
+    const e=by.get(r.name);
+    if(r.amount&&e.amounts.indexOf(r.amount)<0)e.amounts.push(r.amount);
+    if(e.dishes.indexOf(r.dish)<0)e.dishes.push(r.dish);
+  });
+  const list=[...by.values()].sort((a,b)=>b.dishes.length-a.dishes.length
+    ||a.name.localeCompare(b.name,'zh'));
+  openInfo('采购清单',`
+    <div class="tool-row" style="margin:0 0 10px">
+      <button onclick="copyShopping()" id="shopCopyBtn">复制清单</button>
+      <button onclick="exportShoppingCSV()" id="shopCsvBtn">导出 CSV</button>
+      <span class="tool-note">共 ${list.length} 项食材 / ${selected.length} 道菜${
+        fail.length?'（'+esc(fail.join('、'))+' 读取失败）':''}</span>
+    </div>
+    ${list.map(e=>`<div class="shop-item">
+        <span class="n">${esc(e.name)}</span>
+        <span class="a">${esc(e.amounts.join(' + ')||'适量')}</span>
+        <span class="w">${e.dishes.length>1?e.dishes.length+' 道菜':'1 道菜'}</span>
+      </div>`).join('')}
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">
+      按食材名去重；同名食材的用量分档并列（不做单位换算）。</p>`);
+}
+function shopText(){
+  const by=new Map();
+  SHOP_ROWS.forEach(r=>{
+    if(!by.has(r.name))by.set(r.name,{name:r.name,amounts:[],dishes:[]});
+    const e=by.get(r.name);
+    if(r.amount&&e.amounts.indexOf(r.amount)<0)e.amounts.push(r.amount);
+    if(e.dishes.indexOf(r.dish)<0)e.dishes.push(r.dish);
+  });
+  return [...by.values()].map(e=>`${e.name}\t${e.amounts.join(' + ')||'适量'}\t${e.dishes.join('、')}`).join('\n');
+}
+async function copyShopping(){
+  const txt='食材\t用量\t用于\n'+shopText();
+  const btn=document.getElementById('shopCopyBtn');
+  const done=(ok)=>{
+    if(btn){btn.textContent=ok?'✅ 已复制':'复制失败，请手动选中';}
+  };
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(txt); done(true); return;
+    }
+    throw new Error('no clipboard api');
+  }catch(e){
+    // 降级：非 https / 旧浏览器没有 clipboard API。用隐藏 textarea + execCommand。
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      const ok=document.execCommand&&document.execCommand('copy');
+      document.body.removeChild(ta); done(!!ok);
+    }catch(e2){done(false);}
+  }
+}
+function exportShoppingCSV(){
+  if(!SHOP_ROWS.length){alert('采购清单是空的');return;}
+  const by=new Map();
+  SHOP_ROWS.forEach(r=>{
+    if(!by.has(r.name))by.set(r.name,{name:r.name,amounts:[],dishes:[]});
+    const e=by.get(r.name);
+    if(r.amount&&e.amounts.indexOf(r.amount)<0)e.amounts.push(r.amount);
+    if(e.dishes.indexOf(r.dish)<0)e.dishes.push(r.dish);
+  });
+  const rows=[['食材','用量','用于']];
+  [...by.values()].forEach(e=>rows.push([e.name,e.amounts.join(' + ')||'适量',e.dishes.join('、')]));
+  const ok=downloadText(`采购清单-${stamp()}.csv`,rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),'text/csv');
+  if(ok)setToolNote('采购清单已导出');else alert('导出失败：当前浏览器不支持本地下载');
+}
+
+// ---- A3 导出 ----
+function stamp(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+}
+// ⚠ CSV 必须带 UTF-8 BOM：Excel（简体中文 Windows）默认按系统编码读，
+//   不带 BOM 的中文表头会直接变乱码 —— 而表头正是用户打开文件第一眼看到的。
+//   BOM 在这里统一加（**只给 csv**）：调用方各自记得加，迟早会漏一个。
+function csvCell(v){
+  const s=String(v==null?'':v);
+  return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function downloadText(name,text,mime){
+  try{
+    const type=(mime||'text/plain')+';charset=utf-8';
+    const body=/csv/i.test(type)?'\ufeff'+text:text;
+    const blob=new Blob([body],{type});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=name; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}},0);
+    return true;
+  }catch(e){return false;}
+}
+function setToolNote(t){
+  const n=document.getElementById('planToolNote');
+  if(n)n.textContent=t;
+}
+function exportTasksCSV(){
+  const p=LAST_PLAN;
+  if(!p||!p.tasks){alert('先生成一次排程再导出');return;}
+  const rows=[['开始(分)','结束(分)','资源','菜名','步骤号','操作步骤','时长(分)','值守','提前准备']];
+  p.tasks.forEach(t=>rows.push([
+    t.start_min,t.end_min,t.unit_id||'',t.dish||'',t.step_id,
+    t.raw_text||'',t.duration_min,t.unattended?'无人':'人工',t.start_min<0?'是':'']));
+  const ok=downloadText(`排程明细-${stamp()}.csv`,
+    rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),'text/csv');
+  if(ok)setToolNote(`已导出 ${p.tasks.length} 行明细`);else alert('导出失败：当前浏览器不支持本地下载');
+}
+// 作业单 = 一页可打印/另存为 PDF 的 HTML。
+// ⚠ 刻意**不用 `window.open` + `print()`**：弹出窗口会被拦截器挡掉（用户看到的是
+//   "点了没反应"），而且无头环境里 `window.open` 会直接抛错。改成下载一个自打印的
+//   html 文件 —— 双击打开就是打印预览，另存为 PDF 即可。
+function exportSheet(){
+  const p=LAST_PLAN;
+  if(!p||!p.tasks){alert('先生成一次排程再导作业单');return;}
+  const a=dinnerAnchor();
+  const cook=p.tasks.filter(t=>t.start_min>=0);
+  const prep=p.tasks.filter(t=>t.start_min<0);
+  const byUnit={};
+  cook.forEach(t=>{(byUnit[t.unit_id||'-']=byUnit[t.unit_id||'-']||[]).push(t);});
+  const rowsHtml=Object.entries(byUnit).map(([u,ts])=>`
+    <h3>${esc(u)} <span class="mut">${ts.length} 步</span></h3>
+    <table><thead><tr><th>开始</th><th>结束</th><th>菜 / 步</th><th>操作</th><th>值守</th></tr></thead>
+    <tbody>${ts.sort((x,y)=>x.start_min-y.start_min).map(t=>`<tr>
+      <td>${t.start_min}</td><td>${t.end_min}</td>
+      <td>${esc(t.dish||'预热共享')}${t.dish?'#'+t.step_id:''}</td>
+      <td>${esc(t.raw_text||'-')}</td><td>${t.unattended?'无人':'人工'}</td></tr>`).join('')}</tbody></table>`).join('');
+  const html=`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>厨房作业单 ${stamp()}</title>
+<style>
+ body{font:14px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;color:#111;margin:28px}
+ h1{font-size:20px;margin:0 0 4px} .mut{color:#6b7280;font-size:12px;font-weight:400}
+ .kv{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 18px;font-size:13px}
+ .kv b{color:#F26522}
+ h3{font-size:14px;margin:18px 0 6px;border-left:3px solid #F26522;padding-left:8px}
+ table{width:100%;border-collapse:collapse;font-size:12px}
+ th,td{border:1px solid #e5e5e5;padding:5px 8px;text-align:left}
+ th{background:#f7f7f7;font-weight:600}
+ @media print{body{margin:10mm} h3{break-after:avoid}}
+</style></head><body>
+<h1>厨房作业单</h1>
+<div class="mut">${esc(new Date().toLocaleString('zh-CN'))} · 共 ${p.tasks.length} 步</div>
+<div class="kv">
+  <span>总时长 <b>${p.makespan_min}</b> 分</span>
+  <span>出锅差 <b>${p.finish_gap_min}</b> 分</span>
+  ${a==null?'':`<span>开饭 <b>${fmtClock(a)}</b></span>
+  <span>开始下厨 <b>${fmtClock(a-p.makespan_min)}</b></span>`}
+  <span>菜品 <b>${esc((p.dishes||[]).join('、')||(LAST_RESP&&LAST_RESP.plan&&LAST_RESP.plan.dishes||[]).join('、')||'-')}</b></span>
+</div>
+${prep.length?`<h3>提前准备（不占当天时间）</h3><ul>${prep.map(t=>`<li>${esc(t.dish||'')}#${t.step_id} ${t.duration_min} 分 — ${esc(t.raw_text||'')}</li>`).join('')}</ul>`:''}
+${rowsHtml}
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print()},350)})<\/script>
+</body></html>`;
+  const ok=downloadText(`厨房作业单-${stamp()}.html`,html,'text/html');
+  if(ok)setToolNote('作业单已下载（打开即打印预览）');
+  else alert('导出失败：当前浏览器不支持本地下载');
+}
+
+// ---- D4 不可行 / 有风险时的"可照做"建议 ----
+// 规则优先：确定性、离线可用、不会被模型幻觉带偏。
+// ⚠ 判据是"用户接下来该干什么"，不是"哪里错了" —— 只说一句"排程失败"等于没说。
+function hintList(d){
+  const out=[];
+  ((d&&d.warnings)||[]).forEach(t=>{
+    if(t.indexOf('未命中官方菜库')>=0){
+      out.push({level:'high',text:t+'。改个名字，或去「菜谱库」按这个名字新建（填上食材与步骤）再重试。'});
+    }else if(t.indexOf('重名')>=0){
+      out.push({level:'mid',text:t+'。同名会被当成两份来做；只想做一份就去掉重复项。'});
+    }else{
+      out.push({level:'mid',text:String(t)});
+    }
+  });
+  const ck=(d&&d.check)||{};
+  if((ck.conflict||0)>0){
+    out.push({level:'high',text:`检测到 ${ck.conflict} 处设备重叠。多半是设备台数不够：`
+      +'把「选择厨房」换成设备更多的预设，或去掉一道菜再试。'});
+    (ck.details||[]).slice(0,3).forEach(x=>out.push({level:'mid',text:String(x)}));
+  }
+  if((ck.depend_violation||0)>0){
+    out.push({level:'high',text:`有 ${ck.depend_violation} 处依赖被违反（后一步排到了前一步之前）。`
+      +'这不是配置问题，请把这一组菜名记下来反馈。'});
+  }
+  const p=d&&d.plan;
+  if(p&&p.finish_gap_min>15){
+    out.push({level:'mid',text:`出锅差 ${p.finish_gap_min} 分偏大。想更齐可以去掉一道耗时最长的菜，`
+      +'或换设备更多的厨房预设。'});
+  }
+  const ins=d&&d.insight;
+  if(ins&&ins.error)out.push({level:'mid',text:'诊断不可用：'+ins.error});
+  return out;
+}
+function showHints(d){
+  const box=document.getElementById('hints');
+  if(!box)return;
+  const hs=hintList(d);
+  // 没有要说的就**留空**：空容器高度为 0，不会挤到甘特图（这是刻意的）。
+  box.innerHTML=hs.length?hs.map(h=>`<div class="why-risk ${h.level==='high'?'high':'mid'}">
+      <span class="tag">${h.level==='high'?'要处理':'提示'}</span>
+      <span>${esc(h.text)}</span></div>`).join(''):'';
+}
+
+// ---- C2 全局快捷键 ----
+// ⚠ 三条必须同时满足，否则打字就会误触发：
+//   ① 事件源不是可编辑元素（input/textarea/select/contenteditable）；
+//   ② 没有按修饰键（Ctrl/Alt/Meta）—— 否则会抢掉浏览器/系统自己的快捷键；
+//   ③ 数字键走 `show()`（站点切换的**唯一入口**），不自己改 classList ——
+//      绕过去会漏掉 loadLib/loadSettings/loadHist 这些副作用。
+const KEY_VIEWS=['home','plan','recipes','settings','history'];
+document.addEventListener('keydown',e=>{
+  // Esc 关弹层：**不看焦点在哪**（正在输入框里也能关掉），所以放在最前面。
+  if(e.key==='Escape'){closeInfo();if(typeof closeStepDetail==='function')closeStepDetail();return;}
+  if(e.ctrlKey||e.altKey||e.metaKey)return;
+  const t=e.target||{};
+  const tag=(t.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select'||t.isContentEditable)return;
+  if(e.key>='1'&&e.key<='5'){
+    const i=+e.key-1;
+    const btn=document.querySelectorAll('.menu button')[i];
+    if(btn){e.preventDefault();show(KEY_VIEWS[i],btn);}
+    return;
+  }
+  const k=(e.key||'').toLowerCase();
+  if(k==='g'){e.preventDefault();run();return;}
+  if(e.key==='/'){e.preventDefault();const s=document.getElementById('search');if(s)s.focus();}
+});
+// 排程诊断面板（关键路径 / 风险提示）已于 2026-10-08 按用户要求整体移除：
+// HTML 容器、CSS、renderInsight() 与调用点全部删掉。后端 /schedule 仍回带
+// `insight` 字段（只读旁路），只是界面不再展示它。
+function setView(v,btn){GANTT_VIEW=v;document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');if(LAST_RESP)render(LAST_RESP);}
+function renderSwim(cook){
+  const MAX=Math.max(...cook.map(t=>t.end_min),1);
+  let order=[],groups={};
+  if(GANTT_VIEW==='dish'){
+    cook.forEach(t=>{if(!groups[t.dish]){groups[t.dish]=[];order.push(t.dish);}groups[t.dish].push(t);});
+  } else if(GANTT_VIEW==='hand'){
+    cook.filter(t=>t.unit_id==='双手-1'||t.needs_human).forEach(t=>{const k='人工';if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(t);});
+    cook.filter(t=>!t.needs_human&&t.unit_id!=='双手-1').forEach(t=>{const k='无人值守设备';if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(t);});
+  } else {
+    cook.forEach(t=>{if(!groups[t.unit_id]){groups[t.unit_id]=[];order.push(t.unit_id);}groups[t.unit_id].push(t);});
+  }
+  const ticks=[];for(let m=0;m<=MAX;m+=5)ticks.push(m);
+  const scale='<div class="swim-scale">'+ticks.map(m=>`<span style="left:${m/MAX*100}%">${m}m</span>`).join('')+'</div>';
+  const lanes=order.map(uid=>{
+    const short=uid.replace('-1','');
+    const bars=groups[uid].slice().sort((a,b)=>a.start_min-b.start_min).map(t=>{
+      // 3% 最小宽度是为了让极短的任务仍然看得见/点得到; 但末端任务会因此被顶出
+      // 轨道右边界(实测 37 条里 3 条越界, 最多 16px), 所以再夹一次剩余空间。
+      const l=t.start_min/MAX*100;
+      const w=Math.min(Math.max(t.duration_min/MAX*100,3), Math.max(100-l,0.5));
+      const name=t.dish||(t.raw_text||'预热');
+      const txt=GANTT_VIEW==='dish'?`${t.unit_id.replace('-1','')}·${t.step_id}`:`${name}·${t.step_id}`;
+      // data-task 供 seekT() 按 task_id 找回任务(高亮已开始/到点提示音);
+      // data-idx  供点击时按下标开步骤详情。两者都要, 不能合并。
+      // title 里带上 raw_text —— 鼠标悬停就能看到"这一步要干什么", 不必点开。
+      const tip=`${name}#${t.step_id} t=${t.start_min}-${t.end_min} [${t.unit_id}]${t.raw_text?' · '+t.raw_text:''}`;
+      return `<div class="sbar" data-task="${esc(t.task_id)}" data-idx="${t._idx??''}" style="left:${l}%;width:${w}%;background:${colorOf(t)}" title="${esc(tip)}"><span>${esc(txt)}</span></div>`;
+    }).join('');
+    return `<div class="lane"><div class="lane-label"><b>${short}</b></div>
+      <div class="lane-track">${bars}</div></div>`;
+  }).join('');
+  return `<div class="swim">${scale}${lanes}</div>`;
+}
+// ⚠ applyKitchen() 的唯一实现在下面（和 loadPresets / renderKitchenNote 放在一起）。
+//   这里原来有一份旧的：它 `.catch(()=>{})` 吞掉失败、不判 HTTP 状态、只提交 3 个
+//   设备键（漏了冰箱）、且选完不给任何反馈。**同名函数后定义的覆盖先定义的**，
+//   留着这份旧的是个陷阱：读代码的人会以为这就是全部逻辑。
+function togglePlay(){
+  if(PLAY_TIMER){stopPlay();return;}
+  document.getElementById('playBtn').textContent='⏸ 暂停';
+  PLAY_TIMER=setInterval(()=>{
+    CUR_T+=0.5;
+    if(CUR_T>=MAX_T){seekT(MAX_T);stopPlay();return;}
+    seekT(CUR_T);
+  },120);
+}
+function stopPlay(){if(PLAY_TIMER){clearInterval(PLAY_TIMER);PLAY_TIMER=null;}document.getElementById('playBtn').textContent='▶ 播放';}
+// 播放条是"滑块值 / 已播放填充 / 读数"三者的唯一同步点 —— 散在三处写很容易
+// 只更新其中一两个(旧实现重排后 label 就停在上一轮的 t 上没被复位)。
+function syncPlaybar(v){
+  const s=document.getElementById('tSlider'); if(!s)return;
+  s.value=v;
+  const lo=+s.min||0, hi=+s.max||1;
+  s.style.setProperty('--p',((v-lo)/Math.max(hi-lo,1e-9)*100).toFixed(2)+'%');
+  const l=document.getElementById('tLabel');
+  if(l)l.textContent='t='+Math.round(v)+'分';
+}
+function seekT(v){
+  CUR_T=+v;
+  syncPlaybar(v);
+  // 时间轴和播放按钮在「计划」视图里始终可见, 用户完全可以先拖再排。
+  // 旧实现直接读 LAST_PLAN.tasks —— 还没生成排程时 LAST_PLAN 是 null,
+  // 拖动/播放都会抛 TypeError(播放态下每 120ms 抛一次, 控制台刷屏)。
+  // 标签先更新(给用户反馈), 然后早退。
+  if(!LAST_PLAN)return;
+  const nl=document.getElementById('nowline'); if(nl){const W=nl.parentElement.clientWidth;const x=110+(v/MAX_T)*Math.max(W-110,1);nl.style.left=x+'px';nl.dataset.t='t='+Math.round(v);}
+  // 已开始的任务变暗, 到点通知提示音
+  document.querySelectorAll('#gantt .sbar').forEach(b=>{
+    const id=b.dataset.task;
+    const t=LAST_PLAN.tasks.find(x=>x.task_id===id);
+    if(t&&v>=t.end_min)b.style.opacity=.3;else b.style.opacity=1;
+  });
+  (LAST_PLAN.notifications||[]).forEach(n=>{
+    if(Math.abs(n.at_min-v)<0.3&&!FIRED.has(n.at_min)){FIRED.add(n.at_min);beep();}
+  });
+}
+// 甘特条: 拖动改时间(纯视觉, 不回写计划) + 点击看步骤详情。
+// 用 Pointer Events 而不是 mouse 事件 —— 一套代码同时覆盖鼠标/触屏/触控笔。
+// 旧实现只绑 mousedown: 手机上既拖不动、也点不开任何东西。
+// 拖动与点击靠位移阈值区分, 否则每次轻微抖动都会弹出详情。
+const DRAG_SLOP_PX=4;
+function bindDrag(){
+  document.querySelectorAll('#gantt .sbar').forEach(b=>{
+    let active=false, moved=false, startX=0, origL=0;
+    const cleanup=()=>{
+      active=false;
+      document.removeEventListener('pointermove',onmove);
+      document.removeEventListener('pointerup',onup);
+      document.removeEventListener('pointercancel',oncancel);
+    };
+    const onmove=ev=>{
+      if(!active)return;
+      const dx=ev.clientX-startX;
+      if(Math.abs(dx)>DRAG_SLOP_PX)moved=true;
+      const track=b.parentElement;
+      if(!track||!track.offsetWidth)return;
+      b.style.left=Math.max(0,origL+dx/track.offsetWidth*100)+'%';
+    };
+    const onup=()=>{
+      if(!active)return;
+      const wasMoved=moved;
+      cleanup();
+      const i=parseInt(b.dataset.idx,10);
+      if(!wasMoved&&Number.isFinite(i))openStepDetail(i);
+    };
+    const oncancel=()=>{moved=true;cleanup();};   // 手势被系统接管(如页面滚动)不算点击
+    b.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse'&&e.button!==0)return;   // 只响应左键
+      e.preventDefault();
+      active=true; moved=false; startX=e.clientX; origL=parseFloat(b.style.left)||0;
+      document.addEventListener('pointermove',onmove);
+      document.addEventListener('pointerup',onup);
+      document.addEventListener('pointercancel',oncancel);
+    });
+  });
+}
+
+// ---- 步骤详情 ----
+// 回答"这一步到底要做什么"。三类行都必须能正确显示, 少一类用户就会看到空白:
+//   ① 普通任务 → 菜名 + 步骤号 + raw_text 原文
+//   ② 合成任务 → dish 为空(预热共享), 改显示它服务于哪几道菜(dish_list)
+//   ③ 提前准备 → start_min < 0, 显示"提前完成", 不能把负数当时间显示
+function openStepDetail(i){
+  if(!LAST_PLAN||!LAST_PLAN.tasks)return;
+  const t=LAST_PLAN.tasks[i];
+  if(!t)return;
+  const synth=!t.dish;
+  const r1=v=>Math.round((Number(v)||0)*10)/10;
+  const rows=[];
+  rows.push(['设备', esc(t.unit_id||'-')]);
+  rows.push(['时间', t.start_min<0
+      ? '提前完成（前一天 / 今早，不占烹饪时间轴）'
+      : (()=>{                       // 有开饭时间就一并给出墙上时钟，省得用户自己倒推
+          const c0=clockOf(t.start_min), c1=clockOf(t.end_min);
+          return `${r1(t.start_min)} → ${r1(t.end_min)} 分`
+            + (c0&&c1?`（${c0} → ${c1}）`:'')
+            + ` · 时长 ${r1(t.duration_min)} 分`;
+        })()]);
+  rows.push(['值守', t.unattended?'无人值守（可离开）':(t.needs_human?'需要人工操作':'—')]);
+  if(t.temp_c!=null)rows.push(['温度', esc(t.temp_c)+' ℃']);
+  if(synth&&(t.dish_list||[]).length)rows.push(['服务菜品', esc(t.dish_list.join('、'))]);
+  const dep=(t.depends_on||[]);
+  if(dep.length){
+    const links=dep.map(d=>{
+      const j=LAST_PLAN.tasks.findIndex(x=>x.dish===t.dish&&String(x.step_id)===String(d));
+      return j>=0
+        ? `<a onclick="openStepDetail(${j})" style="cursor:pointer;color:var(--accent);text-decoration:underline">第 ${esc(d)} 步</a>`
+        : `第 ${esc(d)} 步`;
+    }).join('、');
+    rows.push(['前置', '先完成 '+links]);
+  }
+  document.getElementById('stepModalTitle').textContent=synth?(t.raw_text||'共享任务'):`${t.dish} · 第 ${t.step_id} 步`;
+  document.getElementById('stepModalBody').innerHTML=
+    `<div class="step-raw">${esc(t.raw_text||'（原文未记录该步骤文字）')}</div>
+     <dl class="step-kv">${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+     ${synth?'<div class="step-hint">这是系统合成的共享任务，不对应菜谱里的单一步骤。</div>':''}
+     ${execBar(i,t)}
+     <div class="step-hint">文字取自菜谱原文，未做改写。</div>`;
+  document.getElementById('stepModal').classList.add('on');
+}
+function closeStepDetail(){
+  const m=document.getElementById('stepModal'); if(m)m.classList.remove('on');
+}
+
+// ==================================================================
+// v3.9 执行态回写 + 偏差重排建议
+// ------------------------------------------------------------------
+// ★ 补的是 Agent 闭环里唯一缺失的那一跳: `schedules_user.json` 存的是**计划**,
+//   不是**执行结果**。以前系统排完就失明, "延迟"只能靠用户在动态事件下拉里手动选。
+//
+// ⚠ 四条纪律:
+//   1. **只建议, 不擅自重排。** 偏差达到阈值只弹确认层, 用户点头才真的调 /reschedule。
+//      自动换掉一份正在执行的方案, 比不重排更破坏信任(与 v3.8 的确认纪律同源)。
+//   2. **报延迟必须填实际用时。** 空着就明确拒绝 —— 编一个数喂进校准样本,
+//      比没有样本更糟(后端 `exec_state.report` 同一口径: 不填按"准时"记, 不记 0)。
+//   3. 打点放在**步骤详情弹层**里, 不新增明细表列。加列会改 `table-layout:fixed`
+//      的列宽分配, 而 14 视口排版探针盯着的就是这套几何 —— 为了一个按钮去动它不值。
+//   4. 重排的 `completed` 直接用后端返回的列表, 前端不自己推断"哪些算做完"。
+// ==================================================================
+let CUR_SID='', EXEC_MAP={};
+
+function execBar(i,t){
+  if(!CUR_SID)
+    return '<div class="step-hint">这次排程没有记录编号（sid），暂时无法记录执行状态。重新生成一次排程即可。</div>';
+  const st=EXEC_MAP[t.task_id];
+  const s=st&&st.state;
+  const tag=s==='done'?'已标记完成':(s==='delayed'?'已记录延迟':(s==='skip'?'已标记跳过':'未记录'));
+  return `<div class="tool-row" style="margin-top:12px">
+      <button onclick="reportExec(${i},'done')" title="标记这一步已经做完">✓ 完成</button>
+      <input class="inp" id="execActual" type="number" min="0" step="0.5" style="width:96px"
+             placeholder="实际分钟" title="这一步实际花了多少分钟；报延迟时必填"
+             onkeydown="if(event.key==='Enter')reportExec(${i},'done')">
+      <button onclick="reportExec(${i},'delayed')" title="这一步比计划慢了">报延迟</button>
+      <button onclick="reportExec(${i},'skip')" title="这一步没做 / 不做">跳过</button>
+    </div>
+    <div class="step-hint" id="execNote">执行状态：${tag}${
+      st&&st.actual!=null?`（实际 ${st.actual} 分 / 计划 ${t.duration_min} 分）`:''}</div>`;
+}
+
+async function loadExec(sid){
+  EXEC_MAP={};
+  if(!sid)return;
+  try{
+    const r=await apiFetch('/api/exec/'+encodeURIComponent(sid));
+    if(!r.ok)return;
+    const d=await r.json().catch(()=>({}));
+    EXEC_MAP=((d.run&&d.run.steps)||{});
+    paintExec();
+  }catch(e){}
+}
+
+function paintExec(){
+  const box=document.getElementById('tasks');
+  if(!box)return;
+  box.querySelectorAll('tr[data-tid]').forEach(tr=>{
+    const s=(EXEC_MAP[tr.getAttribute('data-tid')]||{}).state;
+    tr.classList.toggle('exec-done', s==='done');
+    tr.classList.toggle('exec-late', s==='delayed');
+  });
+}
+
+async function reportExec(i,state){
+  const t=(LAST_PLAN&&LAST_PLAN.tasks||[])[i];
+  const note=document.getElementById('execNote');
+  if(!t)return;
+  if(!CUR_SID){
+    if(note)note.textContent='这次排程没有记录编号，无法记录。请重新生成一次排程。';
+    return;
+  }
+  const el=document.getElementById('execActual');
+  let actual=null;
+  if(el&&String(el.value).trim()!=='')actual=Number(el.value);
+  // 纪律 2: 报延迟却不填实际用时 ⇒ 明确拒绝, 不替用户编一个数
+  if(state==='delayed'&&!(actual>0)){
+    if(note)note.textContent='报延迟要填「实际分钟」—— 不填就算不出偏差，也不该替你猜一个数。';
+    return;
+  }
+  if(note)note.textContent='记录中…';
+  try{
+    const r=await apiFetch('/api/exec/report',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sid:CUR_SID,task_id:t.task_id,state,actual,
+        dishes:(selected||[]).map(s=>s.name),
+        makespan:(LAST_PLAN&&LAST_PLAN.makespan_min)||null})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(note)note.textContent='记录失败：'+((d&&d.detail)||('HTTP '+r.status));
+      return;
+    }
+    EXEC_MAP=((d.run&&d.run.steps)||{});
+    paintExec();
+    if(note){
+      const s=(EXEC_MAP[t.task_id]||{}).state;
+      note.textContent='已记录：'+(s==='delayed'?'延迟':(s==='skip'?'跳过':'完成'));
+    }
+    // 纪律 1: 达到阈值也只是**建议**, 不自动改计划
+    if(d.deviation&&d.deviation.worth)askReplan(d.deviation);
+    else if(d.deviation&&note)note.textContent+=' · '+d.deviation.reason;
+  }catch(e){
+    if(note)note.textContent='记录失败：无法连接后端服务';
+  }
+}
+
+function askReplan(dv){
+  askConfirm('要不要重排',
+    `<p>${esc(dv.reason||'')}</p>
+     <p style="font-size:12px;color:var(--muted)">已经做完的 ${dv.done||0} 步会被锁住不动，
+        只调整后面的安排。重排前后谁更好，结果里会如实列出，不做单向美化。</p>`,
+    '重排', false, ()=>deviationReplan(dv));
+}
+
+async function deviationReplan(dv){
+  if(!selected.length){alert('先生成一次排程');return;}
+  const out=document.getElementById('resched');
+  if(out)out.textContent='按实际执行情况重排中…';
+  try{
+    const r=await apiFetch('/reschedule',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({recipes:selected.map(s=>({name:s.name,ingredients:'',steps:''})),
+                           completed:(dv&&dv.completed)||[]})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){if(out)out.textContent='重排失败（HTTP '+r.status+'）';return;}
+    if(d&&d.error){if(out)out.textContent='重排失败 — '+d.error;return;}
+    closeStepDetail();
+    // ⚠ `/reschedule` 的响应**不带 sid**（它不落库），而 render() 会把它清成 ''。
+    //   重排只调整顺序、task_id（菜名#步骤号）不变 ⇒ 执行态仍然对得上，
+    //   所以这里要把原来的 sid 接回去 —— 否则重排一次之后就再也打不了点了。
+    const keep=CUR_SID;
+    render(d);
+    if(keep){CUR_SID=keep; loadExec(keep);}
+    if(out)out.innerHTML=reschedSummary('按实际执行情况重排',d);
+  }catch(e){
+    if(out)out.textContent='重排失败：无法连接后端服务';
+  }
+}
+
+async function openCalib(){
+  let d;
+  try{
+    const r=await apiFetch('/api/calib');
+    d=await r.json().catch(()=>({}));
+    if(!r.ok){openInfo('执行经验','<div class="empty">读不到经验数据（HTTP '+r.status+'）</div>');return;}
+  }catch(e){openInfo('执行经验','<div class="empty">无法连接后端服务</div>');return;}
+  const bs=d.buckets||[];
+  const rows=bs.length
+    ? ('<table style="width:100%;font-size:12px;border-collapse:collapse">'
+       +'<tr><th align="left">档位</th><th align="right">样本</th>'
+       +'<th align="right">实测/预估</th><th align="right">生效系数</th></tr>'
+       +bs.map(b=>`<tr><td>${esc(b.bucket)}</td><td align="right">${b.n}</td>
+           <td align="right">${b.ratio}</td><td align="right">${
+             b.active?'<b>'+b.effective+'</b>':'<span style="color:var(--muted)">未启用</span>'}</td></tr>`).join('')
+       +'</table>')
+    : '<div class="empty">还没有攒下任何样本。在步骤详情里点「✓ 完成」或「报延迟」就会开始积累。</div>';
+  openInfo('执行经验',
+    `<p style="margin:0 0 8px">当前状态：<b>${d.enabled?'已启用':'未启用（FT_CALIB=off，默认关）'}</b>
+       · 生效门槛：每个档位至少 ${d.min_n} 个样本
+       · 系数限幅：${(d.clamp&&d.clamp[0])}～${(d.clamp&&d.clamp[1])}</p>
+     ${rows}
+     <p style="font-size:11px;color:var(--muted);margin-top:12px">
+       只校准<b>菜谱原文没写时长</b>的步骤 —— 原文写了「蒸 15 分钟」是事实，
+       再准的统计也不覆盖它。默认关着是为了不擅自改动 (Γ, T) 权衡。</p>`);
+}
+
+// Esc 关闭 —— 弹层盖住全屏时, 键盘用户唯一的出路就是它。
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStepDetail();});
+// 设备键的**唯一清单**。预设对象里除设备数外还有 `说明`/`特征` 两个非设备键，
+// 整份 POST 过去会被后端 `_coerce_device_cfg` 判成"未知设备"直接拒 —— 只挑这些键。
+const DEVICE_KEYS=['灶眼数','蒸箱','烤箱','冰箱'];
+let PRESETS={}, KITCHEN_APPLIED='';   // KITCHEN_APPLIED: 当前生效的预设名（''=自定义）
+const _devStr=o=>DEVICE_KEYS.filter(k=>o&&o[k]!=null).map(k=>`${k}${o[k]}`).join('·');
+
+async function loadPresets(){
+  const sel=document.getElementById('kitchenPreset');
+  if(!sel)return;
+  let d,cur;
+  try{ d=await(await apiFetch('/api/device_presets')).json(); }
+  catch(e){ return; }   // 预设只是候选, 失败不阻塞页面; 横幅已由 apiFetch 弹出
+  PRESETS=(d&&d.presets)||{};
+  try{ cur=await(await apiFetch('/api/devices')).json(); }catch(e){ cur=null; }
+
+  // 选项里带上设备数 —— 只写名字的话，"标准家庭厨房"和"大户型开放厨房"到底差在哪
+  // 完全看不出来，只能靠猜。
+  sel.innerHTML='<option value="" disabled>选择厨房预设…</option>'
+    +Object.entries(PRESETS).map(([k,v])=>
+        `<option value="${esc(k)}">${esc(k)}（${esc(_devStr(v))}）</option>`).join('');
+
+  // 反查：当前设备数正好等于某个预设 ⇒ 选中它。
+  // 不做这一步的话，刷新一次页面下拉就退回"选择厨房预设…"，而设备其实早被改过 ——
+  // 用户看到的是一个和自己厨房不符的界面，只能靠记忆猜现在是哪一套。
+  const hit=Object.keys(PRESETS).find(k=>
+    cur && DEVICE_KEYS.every(x=>(PRESETS[k][x]??null)===cur[x]));
+  sel.value=hit||'';
+  KITCHEN_APPLIED=hit||'';
+  renderKitchenNote(cur);
+}
+
+function renderKitchenNote(cur){
+  const el=document.getElementById('kitchenNote');
+  if(!el)return;
+  const p=PRESETS[KITCHEN_APPLIED];
+  if(p){
+    el.innerHTML=`当前：<b>${esc(KITCHEN_APPLIED)}</b> —— ${esc(p['说明']||'')}`
+      +(p['特征']?`（${esc(p['特征'])}）`:'');
+  }else if(cur){
+    el.textContent=`当前：自定义配置（${_devStr(cur)}）—— 可在「设置 → 厨房设备」逐项微调。`;
+  }else{
+    el.textContent='';
+  }
+}
+
+async function applyKitchen(name){
+  if(!name)return;
+  const sel=document.getElementById('kitchenPreset');
+  const note=document.getElementById('kitchenNote');
+  const p=PRESETS[name];
+  if(!p)return;
+  const cfg={};
+  DEVICE_KEYS.forEach(k=>{ if(p[k]!=null) cfg[k]=p[k]; });
+  let r,d;
+  try{
+    r=await apiFetch('/api/devices',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(cfg)});
+    d=await r.json().catch(()=>({}));
+  }catch(e){
+    // 原实现是 `.catch(()=>{})` —— 请求失败时下拉停在刚选的那一项、设备却**一点没变**，
+    // 界面看起来"切好了"，实际排程还按老设备算。
+    if(note)note.textContent='切换失败：无法连接后端服务。';
+    if(sel)sel.value=KITCHEN_APPLIED;      // 回退，别让下拉说谎
+    return;
+  }
+  // 失败有两条路径，**都要判**：业务校验失败是 200 + {"error":...}（历史契约），
+  // 路由/校验失败是 4xx/5xx 且响应体形状不定。只判 d.error 会让 4xx 掉进成功分支。
+  if(!r.ok||(d&&d.error)){
+    const why=(d&&d.error)?(d.error+'（'+((d.details||[]).join('；'))+'）'):('HTTP '+r.status);
+    if(note)note.textContent='切换失败：'+why;
+    if(sel)sel.value=KITCHEN_APPLIED;
+    return;
+  }
+  KITCHEN_APPLIED=name;
+  if(note)note.innerHTML=`已切换到 <b>${esc(name)}</b>：${esc(_devStr(cfg))}。<br>`
+    +'点下面的「生成排程」按这套设备重排（配置已保存，重启后仍然生效）。';
+}
+
+// 「恢复默认」= 回到**出厂**设备配置（后端 `_DEFAULT_DEVICE_CFG`，2/1/1/1，
+// 就是「标准家庭厨房」），并让后端**删掉本机保存的用户层**。
+// 刻意不在前端写死默认值再走 `/api/devices`：
+//   ① 默认值的唯一真源在后端，前端再抄一份，两边早晚会不一致；
+//   ② 走 `/api/devices` 会把"默认值"当成一次用户选择**落盘**，
+//      以后后端改了默认值，这台机器会顽固地停在旧默认上。
+async function resetKitchen(){
+  const note=document.getElementById('kitchenNote');
+  const btn=document.getElementById('kitchenResetBtn');
+  // C1：先把"重置前"的生效配置留一份 —— 撤销就是把它原样写回去。
+  // ⚠ 快照必须**在重置前**取：`/api/devices/reset` 会把本机用户层删掉，
+  //   重置完再问"原来是哪一套"就只能去猜预设了。
+  // ⚠ `window._dev` 由 `loadDevices()` 填；用户没进过「设备」页签时它是空的
+  //   （这里就不给撤销条，而不是给一个点了没反应的按钮）。
+  const before=(window._dev&&typeof window._dev==='object')
+    ?JSON.parse(JSON.stringify(window._dev)):null;
+  if(btn){btn.dataset.txt=btn.innerHTML;btn.disabled=true;btn.textContent='恢复中…';}
+  let r,d;
+  try{
+    r=await apiFetch('/api/devices/reset',{method:'POST'});
+    d=await r.json().catch(()=>({}));
+  }catch(e){
+    if(note)note.textContent='恢复默认失败：无法连接后端服务。';
+    return;
+  }finally{
+    // 与 triggerEvent 同理：上面那条 return 会跳过函数尾部，
+    // 漏掉恢复就永远停在"恢复中…"且 disabled。
+    if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.txt||'恢复默认';}
+  }
+  // 两条失败路径都要判（业务失败是 200 + {"error":...}，路由失败是 4xx/5xx）。
+  if(!r.ok||(d&&d.error)){
+    const why=(d&&d.error)?(d.error+'（'+((d.details||[]).join('；'))+'）'):('HTTP '+r.status);
+    if(note)note.textContent='恢复默认失败：'+why;
+    return;
+  }
+  // 重新反查生效预设：默认那套会被自动选中，`KITCHEN_APPLIED` 一并刷新。
+  await loadPresets();
+  const txt=_devStr(d);
+  if(note)note.innerHTML='已恢复出厂默认'+(txt?`：${esc(txt)}`:'')+'。<br>'
+    +'点下面的「生成排程」按这套设备重排（本机保存的厨房配置已清除）。';
+  // C1：**这里刻意不做二次确认** —— 「恢复默认」本身是可逆的（撤销把原配置写回），
+  //   再叠一层确认只是多一次点击。给撤销条就够了。
+  if(before&&Object.keys(before).length)undoToast('已恢复出厂默认厨房',()=>undoResetKitchen(before));
+}
+
+// 撤销「恢复默认厨房」= 把重置前那套配置重新写回 `/api/devices`。
+// ⚠ 走的是 `POST /api/devices`（会**重新落盘**用户层），而不是 `/api/devices/reset`：
+//   撤销的语义是"回到我原来的样子"，不是"再恢复一次默认"。
+async function undoResetKitchen(before){
+  const note=document.getElementById('kitchenNote');
+  try{
+    const r=await apiFetch('/api/devices',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(before)});
+    const d=await r.json().catch(()=>({}));
+    // 与 `saveDevices` 同一条纪律：业务失败是 200+{"error"}，路由失败是 4xx/5xx，**都要判**。
+    if(!r.ok||(d&&d.error)){
+      const why=(d&&d.error)?(d.error+'（'+((d.details||[]).join('；'))+'）'):('HTTP '+r.status);
+      if(note)note.textContent='撤销失败：'+why;
+      return;
+    }
+    await loadPresets();
+    await loadDevices();
+    if(note)note.textContent='已撤销：厨房配置回到恢复默认之前的那一套。';
+    undoToast('已撤销：厨房配置已还原');
+  }catch(e){
+    if(note)note.textContent='撤销失败：无法连接后端服务。';
+  }
+}
+
+// ---- 菜谱库（增删改查） ----
+// 数据来自 /api/recipes（官方 100 道 + 用户层）。**官方 CSV 永不被改写**：
+// 新增/修改/删除都只写 data/recipes_user.json，所以删除是可恢复的。
+let LIB_CUR=null;   // 详情面板里当前的菜谱对象（编辑表单要用它回填）
+
+async function loadLib(q){
+  const box=document.getElementById('libList');
+  const cb=document.getElementById('libShowDeleted');
+  const showDel=!!(cb&&cb.checked);
+  // q 传 undefined = 从搜索框读当前值（勾选「显示已删除」时走这条）；
+  // q 传字符串 = 用调用方给的值（搜索框 oninput）。
+  const kw=(q===undefined)?((document.getElementById('libSearch')||{}).value||''):q;
+  let d;
+  try{
+    const r=await apiFetch('/api/recipes?q='+encodeURIComponent(kw)+(showDel?'&deleted=all':''));
+    if(!r.ok){box.innerHTML='<div class="empty">加载失败（HTTP '+r.status+'）</div>';return;}
+    d=await r.json();
+  }catch(e){
+    box.innerHTML='<div class="empty">'+(BACKEND_DOWN?'后端未连接':'加载失败')+'</div>';
+    return;
+  }
+  window._libWritable=!!d.writable;
+  const badge=document.getElementById('libCount');
+  // 角标必须反映**真实渲染的条数**（d.recipes.length），不是接口报的数：
+  // 两者一旦不一致，界面上写的条数就是假的。
+  // 搜索态写 total 还会读出「共 100 道 · 显示前 3」—— 像被 limit 截断了，
+  // 实际是搜索命中了 3 道。所以命中数与库中总数分开报。
+  const shownN=d.recipes.length;
+  if(kw)badge.textContent=`匹配 ${d.matched} 道 / 库中 ${d.total} 道`
+    +(shownN<d.matched?` · 显示前 ${shownN}`:'');
+  else badge.textContent=`共 ${d.total} 道`+(shownN<d.total?` · 显示前 ${shownN}`:'')
+    +(d.deleted_total?` · 已删 ${d.deleted_total}`:'');
+  box.innerHTML=d.recipes.map(x=>
+    `<div class="item ${x.deleted?'gone':''}" onclick="loadDetail('${esc(x.id)}')">
+       <span class="dot"></span>
+       <span class="ptxt">${esc(x.name)}</span>
+       <span class="pmeta">${esc(x.method||'—')}·${x.time||0}分${x.source==='user'?' ·自建':''}${x.edited?' ·已改':''}</span>
+       ${x.deleted?'<span class="tag-del">已删除</span>':''}</div>`).join('')
+    ||'<div class="empty">无匹配菜谱</div>';
+}
+
+async function loadDetail(id){
+  const pane=document.getElementById('libDetail');
+  let d;
+  try{
+    const r=await apiFetch('/api/recipe_detail?id='+encodeURIComponent(id));
+    // 接口找不到 id 时返回 404。若直接 r.json() 再拼模板，屏幕上会出现一整片
+    // "undefined · undefined · undefined分" —— 比明确报错更难排查。
+    if(!r.ok){
+      pane.innerHTML='<div class="empty">'
+        +(r.status===404?'这道菜不在菜谱库里（id 可能已变更）':'加载失败（HTTP '+r.status+'）')
+        +'</div>';
+      return;
+    }
+    d=await r.json();
+  }catch(e){
+    pane.innerHTML='<div class="empty">'+(BACKEND_DOWN?'后端未连接':'加载失败')+'</div>';
+    return;
+  }
+  if(!d||!d.name){pane.innerHTML='<div class="empty">没有这道菜的详情</div>';return;}
+  LIB_CUR=d;
+  pane.innerHTML=recipeViewHtml(d);
+}
+
+function recipeViewHtml(d){
+  const ings=(d.ingredients||[]).map(i=>
+    `<span class="pill">${esc(i.name||'')} ${esc(i.amount||'')}</span>`).join('')
+    ||'<span class="empty">未填写食材</span>';
+  const steps=(d.steps||[]).map(s=>`<li>${esc(s)}</li>`).join('')||'<li>未填写步骤</li>';
+  const tags=[d.source==='user'?'自建菜谱':'官方菜谱',d.edited?'已修改':'',d.deleted?'已删除':'']
+    .filter(Boolean).join(' · ');
+  const canWrite=window._libWritable!==false;
+  const actions=!canWrite
+    ? '<div class="step-hint">菜谱写入已在服务端关闭（FT_ALLOW_RECIPE_WRITE=off）。</div>'
+    : (d.deleted
+        ? `<button class="ghost" style="margin-top:14px" onclick="restoreRecipe('${esc(d.id)}')">恢复该菜谱</button>`
+        : `<div style="display:flex;gap:8px;margin-top:14px">
+             <button class="ghost" onclick="editRecipe()">编辑</button>
+             <button class="danger" onclick="deleteRecipe('${esc(d.id)}')">删除</button></div>`);
+  return `
+    <h2 style="margin-bottom:8px">${esc(d.name)} <span class="badge">${esc(d.cooking_method||'')}</span></h2>
+    <div class="detail">${esc(tags)} · <b>分类:</b>${esc(d.category||'—')}
+      · <b>原文时长:</b>${d.cook_time??'—'}分 · <b>步骤:</b>${d.steps_count??'—'}步</div>
+    <div class="step-hint">「原文时长」是把菜谱原文里的分钟数相加，**不等于**排程耗时 ——
+      实际以甘特图为准（那是解析 + 求解后的结果）。</div>
+    <h4 style="margin:10px 0 6px">食材</h4><div>${ings}</div>
+    <h4 style="margin:12px 0 6px">烹饪步骤</h4><ol style="padding-left:18px;line-height:1.9;font-size:12px">${steps}</ol>
+    ${actions}`;
+}
+
+function newRecipe(){
+  LIB_CUR=null;
+  document.getElementById('libDetail').innerHTML=recipeFormHtml(null);
+  const i=document.getElementById('rfName'); if(i)i.focus();
+}
+function editRecipe(){
+  if(!LIB_CUR)return;
+  document.getElementById('libDetail').innerHTML=recipeFormHtml(LIB_CUR);
+}
+function cancelRecipeEdit(){
+  if(LIB_CUR)loadDetail(LIB_CUR.id);
+  else document.getElementById('libDetail').innerHTML='<div class="empty">点击左侧菜品查看详情</div>';
+}
+function recipeFormHtml(d){
+  const isEdit=!!(d&&d.id);
+  return `
+    <h2 style="margin-bottom:10px">${isEdit?'编辑菜谱':'新增菜谱'}</h2>
+    <div class="cfg-row"><span>菜名</span>
+      <input class="inp" id="rfName" value="${esc(d?d.name:'')}" placeholder="排程时用这个菜名" style="margin:0"
+             onkeydown="if(event.key==='Enter')saveRecipe(${isEdit?`'${esc(d.id)}'`:'null'})"></div>
+    <label style="font-size:12px;color:var(--muted);display:block;margin:12px 0 4px">
+      食材清单（按「主料：…；辅料：…」分段）</label>
+    <textarea class="inp" id="rfIng" rows="5" style="width:100%;margin:0;font-size:12px">${esc(d?d.raw_ingredients||'':'')}</textarea>
+    <label style="font-size:12px;color:var(--muted);display:block;margin:12px 0 4px">
+      烹饪步骤（按「第1步：…；第2步：…」分段；设备、温度、时长都写在句子里）</label>
+    <textarea class="inp" id="rfSteps" rows="8" style="width:100%;margin:0;font-size:12px">${esc(d?d.raw_steps||'':'')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="saveRecipe(${isEdit?`'${esc(d.id)}'`:'null'})">保存</button>
+      <button class="ghost" onclick="cancelRecipeEdit()">取消</button>
+    </div>
+    <div id="rfErr" style="margin-top:8px;font-size:12px;color:#c0392b"></div>`;
+}
+
+async function saveRecipe(id){
+  const name=(document.getElementById('rfName')||{}).value||'';
+  const ing=(document.getElementById('rfIng')||{}).value||'';
+  const steps=(document.getElementById('rfSteps')||{}).value||'';
+  const err=document.getElementById('rfErr');
+  const fail=msg=>{if(err)err.textContent=msg;};
+  if(!name.trim()){fail('菜名不能为空');return;}
+  if(!ing.trim()&&!steps.trim()){fail('食材清单与烹饪步骤至少要填一项');return;}
+  try{
+    const r=await apiFetch(id?'/api/recipes/'+encodeURIComponent(id):'/api/recipes',
+      {method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({name:name,ingredients:ing,steps:steps})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){fail('保存失败: '+(d.detail||r.status));return;}
+    // 排程页的菜名列表是缓存的(META)，不失效的话新菜在「选择菜品」里根本不出现。
+    META=[];
+    selected=selected.filter(s=>s.name!==name);
+    await loadLib();
+    await loadDetail(d.recipe.id);
+  }catch(e){
+    fail('保存失败：无法连接后端服务');
+  }
+}
+
+async function deleteRecipe(id){
+  const cur=(LIB_CUR&&String(LIB_CUR.id)===String(id))?LIB_CUR:null;
+  // 二次确认必须说清"能不能恢复" —— 官方菜可恢复，自建菜删掉是真没了。
+  // 两种情况含糊其辞，用户要么不敢用，要么用完才发现找不回来。
+  const isUser=!!(cur&&cur.source==='user');
+  const tail=isUser
+    ? '这是你自建的菜谱，删掉后只能靠撤销条找回（8 秒内）。'
+    : '这是官方菜谱，删除后可在「显示已删除」中恢复；官方数据文件不会被改写。';
+  if(!confirm('确定删除这道菜谱吗？\n\n'+(cur?cur.name+'\n\n':'')+tail))return;
+  try{
+    const r=await apiFetch('/api/recipes/'+encodeURIComponent(id),{method:'DELETE'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){alert('删除失败: '+(d.detail||r.status));return;}
+    META=[];
+    LIB_CUR=null;
+    document.getElementById('libDetail').innerHTML='<div class="empty">'
+      +(d.recoverable===false?'已删除（自建菜谱），点下面的「撤销」可找回'
+                             :'已删除，可在「显示已删除」中恢复')+'</div>';
+    loadLib();
+    // C1：删错了能回来。
+    // ⚠ 快照必须**在删除前**取（`cur` 是删除前 `loadDetail` 存下的对象）——
+    //   删完再回头问"这道菜原来是什么"就晚了，`/api/recipes/{id}` 已经 404。
+    // ⚠ 自建菜只能**重建**（新 id），所以要用 `raw_*` 原文而不是展示用的结构化
+    //   数组：`ingredients` 是 `[{name,amount}]`、`steps` 是切好的数组，
+    //   拿它们去 POST 会被 `RecipeIn`（要字符串）拒掉或丢格式。
+    const snap=cur?{
+      name:cur.name,
+      ingredients:cur.raw_ingredients||(Array.isArray(cur.ingredients)
+        ?cur.ingredients.map(i=>((i&&i.name)||'')+' '+((i&&i.amount)||'')).join('\n')
+        :String(cur.ingredients||'')),
+      steps:cur.raw_steps||(Array.isArray(cur.steps)?cur.steps.join('\n'):String(cur.steps||'')),
+    }:null;
+    undoToast('已删除「'+((cur&&cur.name)||'这道菜')+'」',()=>undoDeleteRecipe(id,isUser,snap));
+  }catch(e){
+    alert('删除失败：无法连接后端服务');
+  }
+}
+
+// 撤销"删除菜谱"。官方菜走 `/restore`（后端本来就有墓碑恢复）；
+// 自建菜是真删，只能拿删除前的原文**重建一条**。
+// ⚠ 重建出来的是**新 id** —— 用户看到的是"菜回来了"（名字/食材/步骤一致），
+//   但历史记录里引用旧 id 的地方不会跟着回来。这是真删的固有限制，
+//   所以删除前的文案仍然说"只能靠撤销条找回"。
+async function undoDeleteRecipe(id,isUser,snap){
+  let r;
+  try{
+    if(isUser){
+      if(!snap||!snap.name){alert('撤销失败：没留下这道菜的原始内容。');return;}
+      r=await apiFetch('/api/recipes',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:snap.name,ingredients:snap.ingredients,steps:snap.steps})});
+    }else{
+      r=await apiFetch('/api/recipes/'+encodeURIComponent(id)+'/restore',{method:'POST'});
+    }
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){alert('撤销失败: '+(d.detail||r.status));return;}
+    META=[];
+    await loadLib();
+    if(!isUser)await loadDetail(id);
+    undoToast('已撤销：'+((snap&&snap.name)||'这道菜')+' 回来了');
+  }catch(e){
+    alert('撤销失败：无法连接后端服务');
+  }
+}
+
+async function restoreRecipe(id){
+  try{
+    const r=await apiFetch('/api/recipes/'+encodeURIComponent(id)+'/restore',{method:'POST'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){alert('恢复失败: '+(d.detail||r.status));return;}
+    META=[];
+    await loadLib();
+    await loadDetail(id);
+  }catch(e){
+    alert('恢复失败：无法连接后端服务');
+  }
+}
+
+// ================= 设置页 =================
+// 三个子页签共用一套「切页签 → 懒加载该页签数据」的模式：
+// 进设置页时**不要**三个都拉（模型列表要问一次 Ollama、设备要问两次后端），
+// 只加载当前页签，切过去再拉。
+function setTab(name,btn){
+  document.querySelectorAll('#v-settings .spanel').forEach(e=>e.classList.remove('active'));
+  const panel=document.getElementById('sp-'+name);
+  if(panel)panel.classList.add('active');
+  document.querySelectorAll('#setTabs .stab').forEach(e=>e.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(name==='model')loadModelSettings();
+  if(name==='devices')loadDevices();
+  if(name==='token')loadToken();
+}
+function loadSettings(){
+  // 默认停在「模型接入」—— 与 HTML 里 .stab.active / #sp-model.active 对应。
+  // 用户手动切过页签后再回来，仍按当前激活的那个页签刷新。
+  const cur=document.querySelector('#setTabs .stab.active');
+  const name=(cur&&cur.dataset.tab)||'model';
+  if(name==='devices')loadDevices();
+  else if(name==='token')loadToken();
+  else loadModelSettings();
+}
+
+// ---- 模型接入 ----
+let MODEL_CFG=null;
+function _setLog(id,text,cls){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.className='set-log'+(cls?' '+cls:'');
+  el.textContent=text||'';
+}
+// FastAPI 的错误体有两种形状：
+//   · HTTPException  → {"detail": "中文原因"}（后端手写的，已经是人话）
+//   · 参数校验失败   → {"detail": [{"type":..,"loc":[..],"msg":..}, ...]}（422）
+// 直接 `'失败：'+(d.detail||...)` 遇到第二种会拼成 "[object Object]" ——
+// 用户看到等于没看到，而且会把"参数不对"误判成"后端坏了"。
+function _httpMsg(d,r){
+  const det=d&&d.detail;
+  if(typeof det==='string'&&det)return det;
+  if(Array.isArray(det)){
+    const m=det.map(e=>e&&(e.msg||e.type)).filter(Boolean).join('；');
+    if(m)return m;
+  }
+  return (d&&(d.error||d.message))||('HTTP '+(r&&r.status));
+}
+async function loadModelSettings(){
+  const hint=document.getElementById('setModelHint');
+  let d,st;
+  try{
+    d=await(await apiFetch('/api/model_settings')).json();
+  }catch(e){
+    if(hint)hint.textContent='无法连接后端，模型配置不可读。';
+    document.getElementById('setModelState').innerHTML=
+      '<div class="empty">'+(BACKEND_DOWN?'后端未连接':'加载失败')+'</div>';
+    return;
+  }
+  try{ st=await(await apiFetch('/api/llm_status')).json(); }catch(e){ st=null; }
+  MODEL_CFG=d;
+
+  // 接入方式下拉：选项来自后端，前端**不再自己写一份**选项列表 ——
+  // 两处各写一份的下场是加一种接入方式时只改了一边，用户看到的下拉里根本没有它。
+  const psel=document.getElementById('setProviderSel');
+  const provs=(Array.isArray(d.providers)&&d.providers.length)?d.providers:
+    [{id:'ollama',label:'本地 Ollama（免密钥）'},{id:'openai',label:'远程 OpenAI 兼容端点（需密钥）'}];
+  psel.innerHTML=provs.map(p=>`<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('');
+  psel.value=d.provider||'ollama';
+  // 被环境变量钉死时置灰 —— 让"改不了"在动手之前就可见，而不是等用户填完、点保存才拿到报错
+  psel.disabled=!!d.provider_locked;
+
+  document.getElementById('setProvider').value=
+    (d.is_local?'本地 Ollama':'远端 OpenAI 兼容')+'（'+d.provider+'）';
+  document.getElementById('setBaseUrl').value=d.base_url||'—';
+  document.getElementById('setProvBadge').textContent=d.is_local?'本地 · 免密钥':'远端 · 需密钥';
+
+  // 远程那一栏。
+  // ⚠ 密钥框**永远不回填原文**（后端也不回传原文）：这个页面可能被公开分享，
+  // 把密钥写进 DOM 等于把它挂在公网上。但只显示"已配置"是不够的 —— 用户没法确认
+  // 配的是**哪一把**钥匙（换过 key 之后尤其明显），于是会反复重填、把好着的配置改坏。
+  // 所以这里显示后端给的**打码预览**（前 6 + 后 4），并把输入框留空。
+  // ⚠ 输入框保持空是关键：把打码值填进 value，用户随手点一次「保存」就会把它
+  // 当密钥提交上去。后端也会拒绝（见 llm.looks_masked），但前端不该制造这个坑。
+  const rv=d.remote||{};
+  const ru=document.getElementById('setRemoteUrl');
+  ru.value=rv.base_url||'';
+  ru.placeholder=rv.effective_base_url||'https://…/v1';
+  ru.disabled=!!d.base_url_locked;
+  const rk=document.getElementById('setRemoteKey');
+  rk.value='';
+  rk.placeholder=rv.api_key_set?'已配置（留空 = 不修改）':'粘贴 API Key（远程必填）';
+  const rkn=document.getElementById('setRemoteKeyNote');
+  if(rkn){
+    rkn.textContent=rv.api_key_set?('已配置：'+(rv.api_key_masked||'')):'未配置';
+    rkn.className='set-note'+(rv.api_key_set?'':' warn');
+    rkn.title=rv.api_key_set
+      ?'只显示打码预览（前 6 + 后 4），密钥原文不会回传到这个页面。留空保存 = 保持原样。'
+      :'远程档没有密钥时，模型调用会被直接跳过（排程仍可用，走规则兜底）。';
+  }
+
+  // 下拉里既要列"本机已下载"的模型，也要能显示"当前选中的那个"（它可能已被删掉）。
+  // 少了后半条，用户会看到一个空下拉框而不知道现在到底用的是哪个模型。
+  const sel=document.getElementById('setModelSel');
+  const names=(d.models||[]).map(m=>m.name);
+  const opts=names.slice();
+  if(d.model&&!opts.includes(d.model))opts.unshift(d.model);
+  sel.innerHTML=opts.length
+    ? opts.map(n=>`<option value="${esc(n)}">${esc(n)}${names.includes(n)?'':'（本机未找到）'}</option>`).join('')
+    : '<option value="">（本机没有已下载的模型）</option>';
+  sel.value=d.model||'';
+  document.getElementById('setModelInput').value=d.model||'';
+
+  const srcTxt={env:'环境变量 FT_LLM_MODEL',settings:'界面选择（已保存）',default:'内置默认值',
+                factory:'出厂预置（随程序附带）'}[d.model_source]||d.model_source;
+  hint.innerHTML=d.locked
+    ? '⚠ '+esc(d.locked)
+    : '选好接入方式与模型后点保存，<b>立即生效，无需重启服务</b>。当前模型来自：<b>'+esc(srcTxt)+'</b>。';
+  // ⚠ 总闸优先级最高，必须**排在最前面**：FT_LLM=off 时这张卡片里填什么都不生效。
+  //   不点破它，用户会把地址 / 密钥 / 模型名反复改、反复点「测试连接」，最后拿到
+  //   一句"请核对接口地址与 API Key"—— 而地址和密钥其实**全是对的**，于是他开始
+  //   怀疑程序坏了。（实测：截图上就是这个状态，28ms 失败、密钥显示已配置。）
+  const killSwitch=llmKillSwitchOff(st);
+  hint.className='set-hint'+(killSwitch?' warn':'');
+  if(killSwitch){
+    hint.innerHTML='⚠ <b>总闸 FT_LLM=off 已把大模型整体关闭</b>（写在 .env.local，'
+      +'<b>本页改不动它</b>）—— 下面填什么都不生效。删掉 .env.local 里的 '
+      +'<b>FT_LLM=off</b> 那一行、重跑 <b>setup.ps1</b>（<b>不要</b>加 -Offline）即可恢复。'
+      +'<br>'+hint.innerHTML;
+  }
+  if(d.provider_locked)hint.innerHTML+='<br>⚠ '+esc(d.provider_locked);
+  // ⚠ 这条错误只在**本地档**显示。远程档下 installed_models() 返回的是
+  // "当前 provider 不是 ollama" —— 那是正常状态，当成警告挂出来会把一次
+  // 配置良好的远程接入显示成"出错了"。
+  if(d.is_local&&d.reachable===false&&d.error)hint.innerHTML+='<br>⚠ '+esc(d.error);
+  if(!d.is_local&&!d.api_key_set)
+    hint.innerHTML+='<br>⚠ 远程端点还没配 API Key：模型调用会被直接跳过'
+      +'（排程仍完全可用，只是走规则兜底，AI 对话也会降级）。';
+  // 出厂预置提示：用户层是空的、但随包的默认配置在生效。必须说清"你还没配过，
+  // 现在跑的是**程序自带**的配置" —— 否则接收方会以为是自己配好的，
+  // 之后换机器 / 换钥匙时完全不知道该去哪儿改。
+  if(d.factory_defaults&&d.factory_defaults.present&&!rv.base_url){
+    hint.innerHTML+='<br>远程那一栏现在用的是<b>随程序附带的出厂预置</b>'
+      +'（<b>'+esc(rv.effective_base_url||'')+'</b>）—— 不用配就能用。'
+      +'在下面填上自己的地址 / 密钥并保存后，就以你的为准（重新发一版程序也不会覆盖它）。';
+  }
+  // 被环境变量钉死时把控件置灰 —— 让"改不了"这件事在动手之前就可见，
+  // 而不是等用户填完、点保存、拿到一句报错。
+  const locked=!!d.locked;
+  document.getElementById('setModelInput').readOnly=locked;
+  sel.disabled=locked;
+
+  onProviderPick(true);   // 按当前接入方式显隐字段（keep=true：别动上面刚填好的值）
+  renderModelState(d,st);
+}
+// 切换接入方式 ⇒ 按档位显隐字段。keep=true 时**不碰**模型输入框里的值（页面加载时用）。
+function onProviderPick(keep){
+  const sel=document.getElementById('setProviderSel');
+  const p=(sel&&sel.value)||'ollama';
+  const remote=p!=='ollama';
+  const panel=document.getElementById('sp-model');
+  if(panel)panel.className='spanel active'+(remote?' mode-remote':' mode-local');
+  const mi=document.getElementById('setModelInput');
+  if(!mi)return;
+  mi.placeholder=remote?'如 gpt-5.6-sol':'如 qwen2.5:7b';
+  if(keep)return;
+  // 换档就把"这一档上次用的模型"回填进去。不回填的话，用户每切一次都要凭记忆
+  // 重打一遍模型名 —— 而打错的名字**不会报错**，只会在调用时静默 404。
+  const d=MODEL_CFG||{}, by=d.models_by_provider||{};
+  mi.value=((p===d.provider)?d.model:(by[p]||''))||'';
+}
+function renderModelState(d,st){
+  const srcTxt={env:'环境变量',settings:'界面设置',default:'内置默认',
+                factory:'出厂预置（随程序附带）'}[d.model_source]||d.model_source;
+  const rv=d.remote||{};
+  const rows=[
+    ['接入方式', d.is_local?'本地 Ollama':'远端 OpenAI 兼容'],
+    ['当前模型', d.model||'—'],
+    ['模型来源', srcTxt],
+    ['接口根地址', d.base_url||'—'],
+    ['单次调用超时', (d.timeout_s||0)+' 秒'],
+    // 只显示"已配置"时，用户没法确认配的是哪一把钥匙（换过 key 之后尤其明显），
+    // 于是会反复重填、把好着的配置改坏。所以这里带上后端给的打码预览。
+    ['密钥', d.api_key_required
+      ?(d.api_key_set?('已配置'+(rv.api_key_masked?('（'+rv.api_key_masked+'）'):''))
+                    :'⚠ 未配置（远程调用会被跳过）')
+      :'不需要（本地模型免密钥）'],
+  ];
+  // "本机模型数"只在本地档有意义：远程档下 installed_models() 本来就不查本机，
+  // 照旧渲染成"读取失败"会让人以为远程没配好。
+  if(d.is_local){
+    rows.push(['本机模型数', d.reachable?((d.models||[]).length+' 个'):'读取失败']);
+  }else{
+    // ⚠ 报**生效值**而不是"已保存值"：接收方的用户层是空的（他从没在界面上存过），
+    //   真正在跑的是随包附带的出厂预置。只报"已保存"会让这一栏显示"—"，
+    //   而他明明能正常用 —— 于是他会以为配置丢了，再去乱填一遍。
+    rows.push(['远程模型（生效）', rv.effective_model||rv.model||'—']);
+    rows.push(['远程地址（生效）', rv.effective_base_url||'（未配置，用内置默认值）']);
+  }
+  if(st){
+    rows.push(['模型链路状态', st.label||st.state||'—']);
+    if(st.online_gate_ok===false){
+      rows.push(['排程闭环', '已改用规则：'+(st.online_gate_reason||'模型比闭环预算慢')]);
+    }
+    const s=st.stats||{};
+    rows.push(['累计调用', (s.calls||0)+' 次（失败 '+(s.failures||0)+'，预算超时 '+(s.deadline_miss||0)+'）']);
+  }
+  document.getElementById('setModelState').innerHTML=rows.map(([k,v])=>
+    `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+  document.getElementById('setStateBadge').textContent=
+    (d.locked||d.provider_locked)?'已锁定':'可修改';
+}
+function onModelPick(){
+  const sel=document.getElementById('setModelSel');
+  if(sel&&sel.value)document.getElementById('setModelInput').value=sel.value;
+}
+// 与后端 `llm.looks_masked()` **同款判据**：含省略号（…）或三个以上星号 ⇒ 这是打码预览。
+// 真实密钥只含 [A-Za-z0-9_-]，永远不会命中。两处必须一致，否则会出现
+// "前端放行、后端 400"或反过来的错位（前者让人白填一遍，后者把好值拦掉）。
+function looksMaskedKey(v){
+  const s=(v||'').trim();
+  return s.indexOf('…')>=0||s.indexOf('***')>=0;
+}
+async function saveModel(){
+  const psel=document.getElementById('setProviderSel');
+  const provider=(psel&&psel.value)||'';
+  const name=(document.getElementById('setModelInput').value||'').trim();
+  if(!name){_setLog('setModelLog','请先选择或填写模型 ID。','err');return;}
+  const payload={model:name};
+  if(provider)payload.provider=provider;
+  // 远程字段**只在远程档**且**只在非空时**才送。空串不送是关键：后端把"空"
+  // 读作"保持原样"（密钥从不回传原文，所以框里永远是空的）；在这里无条件送空串
+  // 会把语义退化成"清空"，用户每保存一次就抹掉一次自己的地址和密钥。
+  if(provider&&provider!=='ollama'){
+    const u=(document.getElementById('setRemoteUrl').value||'').trim();
+    const k=(document.getElementById('setRemoteKey').value||'').trim();
+    if(u)payload.base_url=u;
+    // ⚠ 打码预览值**绝不能**当密钥提交。标签行里就显示着 `sk-pro1…ESb0`，
+    //   用户很可能顺手复制进输入框；提交上去之后所有调用 401/403，而 llm 的失败是
+    //   **静默降级**，现场只剩"AI 突然不工作了"，根本联想不到是保存那一下干的。
+    //   后端也会 400（唯一的判据源在那边），这里拦住只是为了给出更贴切的说明。
+    if(k&&looksMaskedKey(k)){
+      _setLog('setModelLog','「'+k+'」看起来是打码预览，不是真实密钥 —— '
+        +'请粘贴完整 Key；留空保存 = 保持原样，不用重填。','err');
+      return;
+    }
+    if(k)payload.api_key=k;
+  }
+  _setLog('setModelLog','正在保存…');
+  let r,d;
+  try{
+    r=await apiFetch('/api/model_settings',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  }catch(e){_setLog('setModelLog','保存失败：无法连接后端服务。','err');return;}
+  d=await r.json().catch(()=>({}));
+  if(!r.ok){
+    // 后端把"非法 / 被环境变量锁定 / 写盘失败"都做成 400 + detail。
+    // 这里**必须**把 detail 原样显示 —— 它已经写成可照做的中文了。
+    // 走 _httpMsg()：Pydantic 的 422 给的是数组，直接拼会显示 [object Object]。
+    _setLog('setModelLog','保存失败：'+_httpMsg(d,r),'err');
+    return;
+  }
+  // 成功文案按档位分开：`verified` 只对**本地**有意义（远程的模型名在中转站那边，
+  // 本机 Ollama 当然没有）。不分档就会显示"⚠ 本机没有这个模型，调用会返回 404"，
+  // 把一次正常的远程切换吓成失败。
+  let v;
+  if(!d.is_local){
+    const host=(d.base_url||'').replace(/^https?:\/\//,'').split('/')[0]||'端点';
+    v=host+(d.api_key_set?' · 密钥已配置':' · ⚠ 没配密钥，调用会被跳过');
+  }else{
+    v=d.verified===true?'已在本机找到'
+      :d.verified===false?'⚠ 本机没有这个模型，调用会返回 404'
+      :'无法确认本机是否有该模型（本地服务未响应）';
+  }
+  _setLog('setModelLog','已保存：'+(d.is_local?'本地':'远程')+' · '+d.model+'（'+v+'）','ok');
+  loadModelSettings();
+  refreshLlmStatus(true);
+}
+async function testModel(){
+  _setLog('setModelLog','正在测试（会真的调用一次模型，冷启动可能要十几秒）…');
+  const t0=performance.now();
+  let r,d;
+  try{
+    r=await apiFetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:'请只回复两个字：就绪'}]})});
+    d=await r.json().catch(()=>({}));
+  }catch(e){_setLog('setModelLog','测试失败：无法连接后端服务。','err');return;}
+  const ms=Math.round(performance.now()-t0);
+  if(!r.ok||d.offline||!d.reply){
+    // ⚠ 必须按**后端返回的真实原因**分流（/api/chat 的 reason: disabled/breaker/error），
+    //   不能一律写"请核对接口地址与 API Key"：线上最常见的失败其实是总闸 FT_LLM=off，
+    //   那种情况下地址和密钥**全是对的**，用户照着提示翻遍配置也找不到问题。
+    _setLog('setModelLog','测试失败（'+ms+'ms）：'+llmFailReason(d),'err');
+    return;
+  }
+  _setLog('setModelLog','测试通过（'+ms+'ms）：'+String(d.reply).slice(0,60),'ok');
+  loadModelSettings();
+  refreshLlmStatus(true);
+}
+
+// ---- 厨房设备（原「设备」站点）----
+// 数量可编辑；模式/温度区间是只读能力信息（来自官方设备参数清单，见 device_spec.py）。
+// 两者并排，用户填数字时才知道这个数字意味着什么。
+async function loadDevices(){
+  const box=document.getElementById('devRows');
+  let d,spec;
+  try{
+    d=await(await apiFetch('/api/devices')).json();
+  }catch(e){
+    box.innerHTML='<div class="empty">'+(BACKEND_DOWN?'后端未连接':'加载失败')+'</div>';
+    return;
+  }
+  window._dev=d;
+  try{ spec=((await(await apiFetch('/api/device_spec')).json()).devices)||{}; }
+  catch(e){ spec={}; }   // 能力信息纯展示，拉不到不该让数量输入框也一起消失
+  box.innerHTML=Object.entries(d).map(([k,v])=>{
+    const s=spec[k]||{};
+    const range=(s.temp_min==null||s.temp_max==null)?'—（按火力档位）'
+                :(s.temp_min+' ~ '+s.temp_max+' ℃');
+    const modes=(s.modes||[]).map(m=>`<span class="mode-chip">${esc(m)}</span>`).join('')||'—';
+    // 上下限来自后端（/api/device_spec 的 qty_min/qty_max）。写死 max="8" 会让
+    // 蒸箱/烤箱/冰箱（后端上限 4）在界面上"看起来能填 8"，填了才被拒。
+    const qmax=Number.isFinite(s.qty_max)?s.qty_max:8;
+    const qmin=Number.isFinite(s.qty_min)?s.qty_min:0;
+    return `<div class="dev-card">
+      <h4>${esc(k)}<span class="badge">默认 ${esc(s.default_mode||'—')}</span></h4>
+      <label class="set-label" for="dev-${esc(k)}">数量（${qmin} = 不可用，上限 ${qmax}）</label>
+      <input class="dev-num" id="dev-${esc(k)}" type="number" min="${qmin}" max="${qmax}" step="1"
+             data-k="${esc(k)}" value="${esc(v)}"
+             onkeydown="if(event.key==='Enter')saveDevices()">
+      <div class="dev-meta">温度区间：${esc(range)}<br>支持模式：<div style="margin-top:4px">${modes}</div></div>
+    </div>`;
+  }).join('');
+}
+async function saveDevices(){
+  const cfg={};
+  let blank='';
+  document.querySelectorAll('#devRows input[data-k]').forEach(i=>{
+    if(i.value.trim()===''){blank=i.dataset.k;return;}
+    cfg[i.dataset.k]=+i.value;
+  });
+  // 清空输入框时 `+'' === 0`，而 **0 在设备配置里是合法值**（表示该设备不可用）。
+  // 不拦的话，"手滑清空一格再点保存"会静默把整台设备下线，相关步骤全部改走
+  // 顶替/人工 —— 排程结果大变，而界面只回一句"已保存"。
+  // （浏览器把 `1e`、`-` 这类半截输入也当成空串，所以这条拦得住真实手滑。）
+  if(blank){
+    _setLog('setDevLog','保存失败：'+blank+' 的数量不能为空（0 表示该设备不可用）。','err');
+    return;
+  }
+  let r,d;
+  try{
+    r=await apiFetch('/api/devices',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(cfg)});
+    d=await r.json().catch(()=>({}));
+  }catch(e){_setLog('setDevLog','保存失败：无法连接后端服务。','err');return;}
+  // 失败有两条路径，**都要判**：
+  //   ① 业务校验失败 —— 后端返回 200 + {"error": ...}（/api/devices 的历史契约，不是 4xx）；
+  //   ② 请求压根没被路由接受 —— 422/500，响应体是 {"detail": [...]} 甚至不是 JSON。
+  // 只判 d.error 的话 ② 会掉进下面的"已保存"分支。实测：给 /api/devices 发一个
+  // 数组体拿 422 + {"detail":[...]}，界面照样显示"设备配置已保存，下次排程生效"。
+  if(!r.ok){
+    _setLog('setDevLog','保存失败：'+_httpMsg(d,r)+'（HTTP '+r.status+'）','err');
+    return;
+  }
+  if(d&&d.error){
+    _setLog('setDevLog','保存失败：'+d.error+'（'+((d.details||[]).join('；'))+'）','err');
+    return;
+  }
+  _setLog('setDevLog','设备配置已保存，下次排程生效。','ok');
+  loadDevices();
+}
+
+// ---- 访问令牌 ----
+function loadToken(){
+  const i=document.getElementById('setToken');
+  if(i)i.value=AUTH_TOKEN||'';
+  _setLog('setTokenLog', AUTH_FAILED
+    ? '当前请求被要求提供令牌（页面底部有提示）。填入正确令牌后点「保存并重试」。'
+    : '后端未开启鉴权时这里留空即可；令牌只存在本机浏览器。');
+}
+function saveToken(){
+  const v=(document.getElementById('setToken').value||'').trim();
+  try{
+    if(v)localStorage.setItem('ft_token',v);else localStorage.removeItem('ft_token');
+  }catch(e){
+    // 写不进存储（隐私模式 / 配额）不是致命错误：本次会话仍用刚填的值，
+    // 只是刷新后会丢 —— 必须说清楚，否则用户会以为"保存了却没用"。
+    AUTH_TOKEN=v;
+    AUTH_FAILED=false;
+    _setLog('setTokenLog','令牌没能写入浏览器存储（可能是隐私模式）：本次会话仍然生效，刷新后会丢失。','err');
+    retryBackend();
+    return;
+  }
+  // 单一真源是 localStorage，AUTH_TOKEN 只是它的内存镜像 ⇒ 写完之后**从存储读回**。
+  // （不直接赋 v：万一写入被静默丢弃，"界面显示已保存"和"刷新后令牌没了"会同时成立。）
+  AUTH_TOKEN=localStorage.getItem('ft_token')||'';
+  AUTH_FAILED=false;
+  _setLog('setTokenLog',v?'已保存，正在用新令牌重试…':'已清除令牌，正在重试…','ok');
+  // 立刻重试，让用户马上看到结果 —— 而不是下次刷新才知道对不对。
+  retryBackend();
+}
+// C1：清除令牌**可撤销**（撤销就是把原值填回去再存一次），但仍先确认 ——
+// 清掉之后若后端开了鉴权，整个页面会立刻变成"连不上"，用户很容易以为程序坏了。
+function askClearToken(){
+  if(!AUTH_TOKEN){undoToast('当前没有访问令牌');return;}
+  askConfirm('清除访问令牌',
+    '<p>将清除本机保存的访问令牌。若后端开了鉴权，清除后需要重新填写才能访问。</p>'
+    +'<p style="font-size:12px;color:var(--muted)">清空后 8 秒内可撤销。</p>',
+    '确认清除',true,doClearToken);
+}
+function doClearToken(){
+  const backup=AUTH_TOKEN;
+  const input=document.getElementById('setToken');
+  if(input)input.value='';
+  saveToken();
+  undoToast('已清除访问令牌',()=>{
+    const i2=document.getElementById('setToken');
+    if(i2)i2.value=backup;
+    saveToken();
+    undoToast('已恢复访问令牌');
+  });
+}
+
+// ---- 排程记录 ----
+async function loadHist(){
+  let d;
+  try{
+    d=await(await apiFetch('/api/schedules')).json();
+  }catch(e){
+    document.getElementById('histList').innerHTML=
+      '<div class="empty">'+(BACKEND_DOWN?'后端未连接':'加载失败')+'</div>';
+    return;
+  }
+  HIST=d.history||[];
+  CMP_SEL=[];
+  renderHist();
+  setHistNote(HIST.length?'点任意一行可还原当时的计划':'暂无记录');
+}
+// 把 `HIST` 画成列表。**抽出来是为了让"撤销清空"能只重绘、不重新请求** ——
+// 撤销时后端根本没被调用过（清空是延迟提交的），再去 `GET /api/schedules`
+// 只会拿到一份**还没被清空**的旧列表，看着像撤销失败。
+function renderHist(){
+  document.getElementById('histCount').textContent=HIST.length+'条';
+  // ⚠ 行必须带 `cfg-row` 类：`ui_probe.mjs` 有一条断言
+  //   「`#histList .cfg-row` 行数 == 后端 count」，换类名会让它红。
+  document.getElementById('histList').innerHTML=HIST.length? HIST.map(h=>`
+    <div class="cfg-row hist-row" data-sid="${esc(h.sid)}" onclick="restoreSchedule('${esc(h.sid)}',event)"
+         title="点击还原这条记录的计划">
+      <input type="checkbox" class="hist-pick" title="勾选后点「对比选中的 2 条」"
+             onchange="pickCmp('${esc(h.sid)}',this.checked)">
+      <span style="flex:none;font-size:12px">${esc(h.date||'')} ${esc(h.time||'')}</span>
+      <span style="font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((h.dishes||[]).join('、'))}</span>
+      <span class="badge">${h.makespan}分 / 差${h.gap}分</span>
+      <span class="hist-cta">还原 →</span>
+    </div>`).join('')
+    :'<div class="empty">暂无记录</div>';
+}
+function setHistNote(t){
+  const n=document.getElementById('histNote');
+  if(n)n.textContent=t;
+}
+async function fetchSchedule(sid){
+  const r=await apiFetch('/api/schedules/'+encodeURIComponent(sid));
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+// 还原历史计划。⚠ **不重新调 /schedule** —— 那会凭空多出一条历史记录，
+// 用户点几次"看看以前的计划"，历史就被自己刷满了。
+//
+// ⚠ 必须让路给行内的复选框：勾它是"选中对比"，不是"还原计划"。
+//   旧写法给复选框挂 `onclick="event.stopPropagation()"`，语义上等价，但
+//   「全控件反应遍历」按 **onclick 属性**枚举控件 —— 复选框因此被当成一个
+//   "点下去什么都没发生"的控件归入待判断，于是**每多一条历史就多一个待判断**，
+//   退出码跟着变 1，基线数字也不再稳定。改成在这里判事件源之后，复选框根本
+//   不带 onclick，探针不再枚举它，数字回到常数。
+async function restoreSchedule(sid,ev){
+  if(ev&&ev.target&&ev.target.closest&&ev.target.closest('input'))return;
+  let rec;
+  try{
+    rec=await fetchSchedule(sid);
+  }catch(e){
+    alert('还原失败：'+(e&&e.message||e));
+    return;
+  }
+  if(!rec||!rec.plan||!rec.plan.tasks){
+    alert('这条记录没有完整计划（可能是旧版本存的摘要）。重新排一次即可。');
+    return;
+  }
+  show('plan',document.querySelectorAll('.menu button')[1]);
+  render({plan:rec.plan,kpi:rec.kpi||{},check:rec.check||{},
+          insight:rec.insight||null,elapsed_ms:rec.elapsed_ms,bound:rec.bound});
+  setHistNote('已还原 '+((rec.date||'')+' '+(rec.time||''))+' 的计划');
+}
+// 勾选对比项。最多保留 2 条 —— 勾第 3 条时挤掉最早勾的那条（并同步取消它的勾）。
+function pickCmp(sid,on){
+  if(on){
+    if(CMP_SEL.indexOf(sid)<0)CMP_SEL.push(sid);
+    while(CMP_SEL.length>2)CMP_SEL.shift();
+  }else{
+    CMP_SEL=CMP_SEL.filter(x=>x!==sid);
+  }
+  document.querySelectorAll('#histList .hist-row').forEach(row=>{
+    const sel=CMP_SEL.indexOf(row.getAttribute('data-sid'))>=0;
+    const cb=row.querySelector('input.hist-pick');
+    if(cb)cb.checked=sel;
+    row.classList.toggle('picked',sel);
+  });
+  setHistNote(CMP_SEL.length===2?'已选 2 条，点「对比选中的 2 条」'
+    :`已选 ${CMP_SEL.length} 条（需 2 条）`);
+}
+// A2 计划对比：只比**看得懂**的指标，且明确标出谁更好。
+// ⚠ 设备利用率**不标优劣** —— 它是仪表盘不是方向盘（利用率高不等于计划好）。
+function devBusy(plan){
+  const m={};
+  ((plan&&plan.tasks)||[]).forEach(t=>{
+    if(t.start_min<0)return;
+    const k=t.unit_id||'-';
+    m[k]=(m[k]||0)+(Number(t.duration_min)||0);
+  });
+  return m;
+}
+function cmpRow(label,a,b,lowerBetter){
+  let ca='',cb='';
+  if(lowerBetter&&a!==b){
+    if(a<b)ca='better',cb='worse';else ca='worse',cb='better';
+  }
+  return `<tr><th>${esc(label)}</th><td class="${ca}">${esc(a)}</td><td class="${cb}">${esc(b)}</td></tr>`;
+}
+async function openCompare(){
+  if(CMP_SEL.length!==2){
+    setHistNote('先在记录左侧勾选**两条**（勾第三条会替换最早勾的）');
+    return;
+  }
+  openInfo('计划对比','<div class="empty">正在读取两条记录…</div>');
+  let A,B;
+  try{
+    [A,B]=await Promise.all(CMP_SEL.map(fetchSchedule));
+  }catch(e){
+    openInfo('计划对比',`<div class="empty">读取失败：${esc(e&&e.message||e)}</div>`);
+    return;
+  }
+  const tag=r=>`${(r.date||'')} ${(r.time||'')}<br><span style="font-size:11px;color:var(--muted)">${esc((r.dishes||[]).join('、'))}</span>`;
+  const ba=devBusy(A.plan),bb=devBusy(B.plan);
+  const units=[...new Set(Object.keys(ba).concat(Object.keys(bb)))].sort();
+  const r1=(v)=>Math.round(v*10)/10;
+  openInfo('计划对比',`
+    <table class="cmp-table">
+      <thead><tr><th>指标</th><th>A<br>${tag(A)}</th><th>B<br>${tag(B)}</th></tr></thead>
+      <tbody>
+        ${cmpRow('出锅差(分)',A.plan.finish_gap_min,B.plan.finish_gap_min,true)}
+        ${cmpRow('总时长(分)',A.plan.makespan_min,B.plan.makespan_min,true)}
+        ${cmpRow('任务步数',(A.plan.tasks||[]).length,(B.plan.tasks||[]).length,true)}
+        ${cmpRow('冲突数',((A.check||{}).conflict||0),((B.check||{}).conflict||0),true)}
+        ${cmpRow('菜品数',(A.dishes||[]).length,(B.dishes||[]).length,false)}
+        ${cmpRow('设备利用率(%)',(A.kpi||{}).device_utilization??'-',(B.kpi||{}).device_utilization??'-',false)}
+      </tbody>
+    </table>
+    <h3 style="font-size:13px;margin:16px 0 6px">各设备占用（分钟）</h3>
+    <table class="cmp-table">
+      <thead><tr><th>设备</th><th>A</th><th>B</th></tr></thead>
+      <tbody>${units.map(u=>cmpRow(u,r1(ba[u]||0),r1(bb[u]||0),false)).join('')
+        ||'<tr><td colspan="3" class="mut">无</td></tr>'}</tbody>
+    </table>
+    <p style="font-size:11px;color:var(--muted);margin-top:12px">
+      绿色=更优、红色=更差，只对"越小越好"的指标标色。设备利用率不标优劣 ——
+      它是仪表盘不是方向盘。</p>`);
+}
+// 清空历史。⚠ 不用 `confirm()`：无头环境里它会抛 "Not implemented"，
+//   而且"点一下弹个系统框"在浏览器里也常被拦。改成**弹层里二次确认**。
+function clearHist(){
+  openInfo('清空历史记录',`
+    <p>将删除**全部**历史排程记录（含落盘文件）。</p>
+    <p style="font-size:12px;color:var(--muted)">当前共 ${HIST.length} 条。确认后有 8 秒撤销窗口，
+      超时才会真正删掉落盘文件。</p>
+    <div class="tool-row" style="margin-top:12px">
+      <button onclick="doClearHist()" id="histClearConfirm" style="color:var(--bad)">确认清空</button>
+      <button onclick="closeInfo()">取消</button>
+    </div>`);
+}
+// ⚠ 这里**故意不立刻**调 `DELETE /api/schedules` —— 先给用户 8 秒撤销窗口。
+//   后端一旦删了落盘文件就真回不来了（`/api/schedules` 没有"写回"端点），
+//   所以"不新增后端接口、又能真撤销"的唯一做法就是**延迟提交**。
+//   代价：8 秒内刷新页面 ⇒ 删除没生效，历史还在。这是**更安全**的方向
+//   （宁可"没删掉"也不要"删了回不来"）。
+let HIST_CLEAR_TIMER=null, HIST_BACKUP=null;
+function doClearHist(){
+  const n=HIST.length;
+  if(!n){closeInfo();setHistNote('本来就没有记录');return;}
+  HIST_BACKUP=HIST.slice();
+  CMP_SEL=[];
+  HIST=[];
+  closeInfo();
+  renderHist();
+  setHistNote('已清空 '+n+' 条记录（8 秒内可撤销）');
+  clearTimeout(HIST_CLEAR_TIMER);
+  HIST_CLEAR_TIMER=setTimeout(commitClearHist,8000);
+  undoToast('已清空 '+n+' 条历史记录',undoClearHist);
+}
+// 撤销：后端**从没被调用过**，所以只要把内存里的备份放回去、重绘即可。
+function undoClearHist(){
+  clearTimeout(HIST_CLEAR_TIMER); HIST_CLEAR_TIMER=null;
+  if(!HIST_BACKUP){setHistNote('没有可撤销的清空');return;}
+  HIST=HIST_BACKUP; HIST_BACKUP=null;
+  renderHist();
+  setHistNote('已撤销清空');
+}
+// 8 秒到点，真正落刀。失败要**如实说**并重新拉一次 ——
+// 否则界面显示"已清空"，后端其实还有，用户下次进记录页会莫名其妙地"记录回来了"。
+async function commitClearHist(){
+  HIST_CLEAR_TIMER=null;
+  HIST_BACKUP=null;
+  let d;
+  try{
+    const r=await apiFetch('/api/schedules',{method:'DELETE'});
+    d=await r.json().catch(()=>({}));
+    if(!r.ok||d.ok===false){
+      setHistNote('清空失败：'+((d&&d.error)||('HTTP '+r.status)));
+      await loadHist();
+      return;
+    }
+  }catch(e){
+    setHistNote('清空失败：'+((e&&e.message)||e));
+    await loadHist();
+    return;
+  }
+  setHistNote('已清空 '+((d&&d.cleared)||0)+' 条记录');
+}
+// ---- 模型链路状态 ----
+// 排程链路对模型可用性零依赖(不可用时静默走规则兜底), 这本身是优点;
+// 但"静默"的代价是用户完全看不出 AI 到底用上没有、为什么没用上。
+// 这里把开关/熔断/统计显式化 —— 部署到服务器后"AI 变笨了"才有得查。
+let LLM_NOTIFIED=false;
+// FT_LLM=off 是**全局总闸**（写在 .env.local，后端只在 llm.enabled() 里读它）——
+// 设置页改不动它。不专门点出来，用户会在设置页把「接入方式」切成「远程」、
+// 看到"保存成功"，然后 AI 对话**永远**回"离线模式"，去翻模型配置、翻网络，
+// 怎么都想不到是 .env.local 里那一行（部署时误加了 setup.ps1 -Offline）。
+function llmKillSwitchOff(d){
+  const v=((d&&d.switches)||{}).FT_LLM;
+  return ['off','0','false','no'].indexOf(String(v||'').toLowerCase())>=0;
+}
+// 「测试连接」失败时，把后端 /api/chat 返回的 reason 翻成**可照做**的中文。
+// 三种成因的修法完全不同，绝不能合并成一句"请核对接口地址与 API Key"：
+//   disabled —— 总闸 FT_LLM=off / 远程档没配密钥 / 配置里关掉了（地址和密钥可能是对的！）
+//   breaker  —— 熔断中（多半是 429 限流），等冷却或重存一次配置即可复位
+//   error    —— 真的调用了但没拿到内容，这时才该查地址与密钥
+// 后端早就在返回 reason 了，前端不用它，等于把用户往错的方向引。
+function llmFailReason(d){
+  const st=window._llmState||{}, r=((d&&d.reason)||'').toString();
+  if(r==='disabled'){
+    if(llmKillSwitchOff(st))
+      return '总闸 FT_LLM=off 已把大模型整体关闭（写在 .env.local，设置页改不动它）'
+        +' —— 删掉那一行、重跑 setup.ps1（不要加 -Offline）即可恢复。';
+    if(st.api_key_required&&!st.api_key_set)
+      return '当前是远程档，但没配 API Key —— 在上面「远程 API Key」里填好、保存后再试。';
+    return '模型已在配置中关闭（检查 .env.local 里的 FT_LLM / FT_AGENT_LLM）。';
+  }
+  if(r==='breaker'){
+    const why=st.breaker_reason_text||st.breaker_reason||'连续调用失败';
+    const mins=st.retry_after_s?('，约 '+Math.ceil(st.retry_after_s/60)+' 分钟后自动重试'):'';
+    return '模型熔断中：'+why+mins+'（重新保存一次配置可立即复位）。';
+  }
+  const cur=MODEL_CFG||{};
+  return '模型没有返回内容'+(d&&d.model?('（当前模型 '+d.model+'）'):'')+'。'
+    +(cur.is_local?'请确认 Ollama 已启动、且该模型已下载。'
+                  :'请核对远程接口地址与 API Key（在设置页上方），或改用本地模型。');
+}
+async function refreshLlmStatus(){
+  const el=document.getElementById('llmBadge'); if(!el)return;
+  try{
+    const d=await(await apiFetch('/api/llm_status')).json();
+    window._llmState=d;
+    // ⚠ 「在线」只看熔断器（开关开着 + 凭据非空），**不代表调用成功**。
+    //   上游 502 / 凭据被拒这类失败在攒够阈值前不会熔断，徽标就一直挂着绿色的
+    //   「在线」，而助手已经回「已切换到离线模式」—— 用户对着一个绿色的"在线"
+    //   完全不知道该查什么。所以把"最近一次失败"叠加上来。
+    const lf=d.last_failure||{};
+    const failing=d.state==='online'&&!!lf.code;
+    const mark=failing?'⚠ ':(d.state==='online'?'● ':d.state==='breaker'?'▲ ':'○ ');
+    el.textContent=mark+(failing?'模型调用失败':d.label);
+    el.className='llm-badge '+(failing?'warn':d.state==='online'?'on':d.state==='breaker'?'warn':'off');
+    const bits=[`状态: ${d.label}`, `模型: ${d.model||'-'}`];
+    if(failing){
+      bits.push(`最近一次调用失败: HTTP ${lf.code}${lf.hint?('（'+lf.hint+'）'):''}`);
+    }
+    // 本地模型（Ollama）**没有密钥这个概念**。以前这里无条件写「密钥: 未配置」，
+    // 用户明明按文档装好了 Ollama、模型也能跑，界面上却写着"未配置" ——
+    // 只会把人引去翻 .env 找一个根本不存在的配置项。所以按 provider 分流：
+    // 需要密钥的才报密钥状态，本地的报端点（那才是他真正需要核对的东西）。
+    if(d.api_key_required){
+      // 带上打码预览：只说"已配置"时，换过钥匙的人无法确认现在用的是哪一把。
+      bits.push(`密钥: ${d.api_key_set?('已配置'+(d.api_key_masked?('（'+d.api_key_masked+'）'):'')):'未配置'}`);
+    }else{
+      bits.push(`本地服务: ${d.base_url||'-'}`);
+    }
+    bits.push(`超时: ${d.timeout_s}s`);
+    if(d.state==='breaker'){
+      bits.push(`原因: ${d.breaker_reason_text||d.breaker_reason}`);
+      bits.push(`约 ${Math.ceil(d.retry_after_s/60)} 分钟后自动重试`);
+    }
+    if(d.state==='off'){
+      bits.push(llmKillSwitchOff(d)
+        ? '⚠ 总闸 FT_LLM=off 已把大模型整体关闭（写在 .env.local，设置页改不动它）—— 要用远程模型请删掉那一行并重跑 setup.ps1'
+        : '离线模式下排程仍完全可用, 仅 AI 点菜/对话降级为规则');
+    }
+    // 闭环闸门：模型在线，但比在线闭环那几秒的预算慢 ⇒ 排程改走规则，
+    // 对话/通知照常用模型。不报出来，用户只会看到"模型在线却好像没用上"。
+    if(d.online_gate_ok===false){
+      bits.push('排程闭环已改用规则：'+(d.online_gate_reason||'模型比闭环预算慢'));
+    }
+    bits.push('点击刷新');
+    el.title=bits.join(' · ');
+  }catch(e){
+    // 后端不可达时 markBackendDown 已经把徽标改成「后端未连接」并弹了横幅,
+    // 这里再写「状态未知」会把它盖掉 —— 那正是用户看不懂的含糊说法。
+    if(BACKEND_DOWN)return;
+    el.textContent='○ 状态未知'; el.className='llm-badge off';
+    el.title='取模型状态失败: '+e;
+  }
+}
+// 降级提示只弹一次(每次页面加载), 不重复打扰 —— 它不是错误, 是既有设计。
+function maybeNotifyLlmDegrade(){
+  if(LLM_NOTIFIED)return;
+  const d=window._llmState;
+  if(!d||d.state==='online')return;
+  LLM_NOTIFIED=true;
+  const el=document.getElementById('llmToast'); if(!el)return;
+  const why=d.state==='breaker'
+    ? `${d.breaker_reason_text||d.breaker_reason}（约 ${Math.ceil(d.retry_after_s/60)} 分钟后自动重试）`
+    // state=off 有三种成因：总闸被关 / 没配凭据（远端 provider）/ 其它配置关闭。
+    // 本地 Ollama 免密钥，绝不能说"未配置模型密钥" —— 它没有密钥可配。
+    // 「总闸被关」必须单列：它和"没配密钥"的修法完全不同（要去改 .env.local 重跑脚本）。
+    : (llmKillSwitchOff(d)?'总闸 FT_LLM=off 已把大模型整体关闭（.env.local，设置页改不动它）'
+       : (d.api_key_required&&!d.api_key_set?'未配置模型密钥':'已在配置中关闭'));
+  el.innerHTML=`<span class="x" onclick="document.getElementById('llmToast').classList.remove('on')">✕</span>
+    本次为 <b>规则模式</b>：${esc(why)}。排程结果不受影响，仅 AI 点菜与对话降级。`;
+  el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),9000);
+}
+
+fitChrome();
+addEventListener('resize',fitChrome);
+// 只监听 resize 是不够的 —— 顶栏高度必须**跟着顶栏的实际尺寸走**，而不是
+// "在 resize 触发的那一瞬间采一次样"。踩过的坑：跨断点时 button 上有
+// `transition:all .3s ease`，min-height / padding 都是**渐变**的，resize 那一刻
+// 顶栏还处在过渡中间态。实测（真 Edge + CDP，320×568）：
+//     resize 瞬间 nav.offsetHeight = 189px  → --chrome 写成 195px
+//     过渡结束后 nav.offsetHeight = 101px  → 正确值应是 107px
+// 于是 --chrome 被永久写错，`#v-plan.active{height:calc(100vh - var(--chrome))}`
+// 跟着算错（桌面 62 vs 65、手机横屏 72 vs 50）。更隐蔽的是它**只在切换过
+// 窗口尺寸/旋转过屏幕之后才出现**，刷新一下就好了 —— 极难复现。
+// ResizeObserver 在过渡的每一帧都会回调，稳定后的值自然把错值覆盖掉。
+if(window.ResizeObserver){new ResizeObserver(fitChrome).observe(document.querySelector('.nav'));}
+// 字体换上来之后顶栏高度会变(logo 里的中文字), 再量一次
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitChrome);
+loadRecipes();
+loadPresets();
+loadInsertPool();     // 插单候选下拉（默认事件类型就是「插单」，必须开局就有内容）
+onEventChange();      // 同步一次控件显隐：浏览器刷新会恢复表单状态，可能与默认档不一致
+refreshLlmStatus();
+// D1：把上次的对话恢复出来（`/api/chat` 本来就收整个 messages 数组，
+// 只是页面刷新会把内存里的 chatMsgs 清空 —— 恢复它，AI 才不会"失忆"）。
+chatMsgs=chatLoad();
+renderChatHistory();
+</script>
+
+<!-- 步骤详情弹层（点击甘特条 或 任务明细行 打开） -->
+<div class="step-modal" id="stepModal" role="dialog" aria-modal="true"
+     aria-labelledby="stepModalTitle" onclick="if(event.target===this)closeStepDetail()">
+  <div class="step-modal-card">
+    <div class="step-modal-head">
+      <b id="stepModalTitle">步骤详情</b>
+      <span class="step-close" id="stepModalClose" onclick="closeStepDetail()" title="关闭">✕</span>
+    </div>
+    <div class="step-modal-body" id="stepModalBody"></div>
+  </div>
+</div>
+
+<!-- 通用信息弹层（v3.7）：为什么这样排 / 采购清单 / 计划对比 共用。
+     刻意复用 .step-modal 的遮罩与卡片样式 —— 排程页高度是三列 flex 算出来的，
+     内联面板会重算整页布局（见 .step-modal 那段注释），覆盖层完全不动它。 -->
+<div class="step-modal" id="infoModal" role="dialog" aria-modal="true"
+     aria-labelledby="infoTitle" onclick="if(event.target===this)closeInfo()">
+  <div class="step-modal-card wide">
+    <div class="step-modal-head">
+      <b id="infoTitle">详情</b>
+      <span class="step-close" onclick="closeInfo()" title="关闭">✕</span>
+    </div>
+    <div class="step-modal-body" id="infoBody"></div>
+  </div>
+</div>
+
+<!-- 模型降级提示（一次性，不重复打扰） -->
+<div class="llm-toast" id="llmToast"></div>
+<!-- C1 撤销条。**默认是空的、display:none** —— 只有危险操作后才被填内容并 .on。
+     空容器不占任何空间，也不会被排版探针当成"悬浮元素遮挡"。 -->
+<div class="undo-bar" id="undoBar"></div>
+
+<!-- 后端不可达横幅：把"永远加载中"变成一句能照着做的提示 -->
+<div class="offline-bar" id="offlineBar" role="alert">
+  <span id="offlineText"></span>
+  <button onclick="retryBackend()">重试</button>
+  <span class="x" onclick="document.getElementById('offlineBar').classList.remove('on')" title="关闭">✕</span>
+</div>
+
+<!-- 悬浮 AI 助手 -->
+<div class="float-panel" id="floatPanel">
+  <div class="float-head">
+    <span>烹饪助手</span>
+    <span id="chatModel" style="font-size:11px;font-weight:400;opacity:.85;margin-left:auto;margin-right:10px"></span>
+    <span style="cursor:pointer;opacity:.8" onclick="toggleFloat(false)">✕</span>
+  </div>
+  <div class="float-body" id="chatBox2">
+    <div class="note">你好！几个人吃、想吃什么口味，我来帮你点菜排顺序。</div>
+  </div>
+  <div class="float-input">
+    <input id="chatInput2" placeholder="说点什么…" onkeydown="if(event.key==='Enter')sendChat('chatBox2','chatInput2')">
+    <button class="btn" onclick="sendChat('chatBox2','chatInput2')">发送</button>
+  </div>
+  <!-- 对话工具行（v3.7）。
+       「按这句改菜单」= 把**上一条用户消息**当成对当前菜单的修改指令，交给
+       /api/revise_plan 解析（增删 + 排序），再重新排程。
+       ⚠ 它只在"已经选了菜"时才有意义 ⇒ 空选时前端直接拦下并说明，不打后端。
+       「清空」删掉本机保存的对话记录（见 chatMsgs 的持久化说明）。 -->
+  <div class="float-tools">
+    <button onclick="reviseFromChat()" id="reviseBtn"
+            title="把刚才那句话当成对当前菜单的修改指令，例如「把汤挪到最后」「去掉红烧肉」">按这句改菜单</button>
+    <button onclick="askClearChat()" id="chatClearBtn" title="清空本机保存的对话记录（可撤销）">清空对话</button>
+  </div>
+</div>
+<div class="fab" onclick="toggleFloat()" title="和 AI 聊聊">💬</div>
+</body>
+</html>
